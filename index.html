@@ -267,28 +267,34 @@
     let markersLayer = L.layerGroup();
     let isMobileSidebarOpen = false;
 
-    // ฟังก์ชันเปิดแอป CamHipro ผ่าน Deep Link / Intent
-    function openCamHipro(uid) {
-      const isAndroid = /android/i.test(navigator.userAgent);
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    // ฟังก์ชันคัดลอก UID ลง Clipboard พร้อมเปิดแอป CamHipro
+function openCamHipro(uid) {
+  // 1. คัดลอก UID ไปยัง Clipboard ทันที
+  if (uid && uid !== '-') {
+    navigator.clipboard.writeText(uid).then(() => {
+      // แจ้งเตือนสั้นๆ ให้ผู้ใช้ทราบ
+      alert(`คัดลอก UID: ${uid} เรียบร้อยแล้ว!\nกำลังเปิดแอป CamHipro...`);
+    }).catch(() => {});
+  }
 
-      if (isAndroid) {
-        // ใช้ Intent สำหรับเปิด CamHipro บน Android หากไม่มีแอปจะเปิด Google Play Store อัตโนมัติ
-        window.location.href = "intent://#Intent;scheme=camhipro;package=com.hichip.campro;end";
-      } else if (isIOS) {
-        // สำหรับ iOS
-        const now = Date.now();
-        window.location.href = "camhipro://";
-        setTimeout(() => {
-          if (Date.now() - now < 1500) {
-            window.location.href = "https://apps.apple.com/th/app/camhipro/id1420508581";
-          }
-        }, 1000);
-      } else {
-        // บน Desktop หรือเบราว์เซอร์ทั่วไป
-        window.open("https://play.google.com/store/apps/details?id=com.hichip.campro", "_blank");
+  // 2. สั่งเปิดตัวแอปพลิเคชัน
+  const isAndroid = /android/i.test(navigator.userAgent);
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+  if (isAndroid) {
+    window.location.href = "intent://#Intent;scheme=camhipro;package=com.hichip.campro;end";
+  } else if (isIOS) {
+    const now = Date.now();
+    window.location.href = "camhipro://";
+    setTimeout(() => {
+      if (Date.now() - now < 1500) {
+        window.location.href = "https://apps.apple.com/th/app/camhipro/id1420508581";
       }
-    }
+    }, 1000);
+  } else {
+    window.open("https://play.google.com/store/apps/details?id=com.hichip.campro", "_blank");
+  }
+}
 
     // เปิด/ปิด Sidebar บนจอมือถือ
     function openMobileSidebar() {
