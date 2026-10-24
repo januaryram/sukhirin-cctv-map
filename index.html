@@ -42,21 +42,12 @@
     .leaflet-popup-tip {
       background: #0f172a !important;
     }
-    
-    /* ซ่อน Scrollbar แนวนอนในมือถือ */
-    .no-scrollbar::-webkit-scrollbar {
-      display: none;
-    }
-    .no-scrollbar {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
-    }
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 flex flex-col h-screen overflow-hidden font-sans">
 
   <!-- Header รองรับจอมือถือ -->
-  <header class="bg-slate-900 border-b border-slate-800 px-3 md:px-6 py-2 flex items-center justify-between shrink-0 z-30 shadow-md">
+  <header class="bg-slate-900 border-b border-slate-800 px-3 md:px-6 py-2.5 flex items-center justify-between shrink-0 z-30 shadow-md">
     <div class="flex items-center gap-2">
       <div class="p-1.5 md:p-2 bg-blue-600/20 text-blue-400 rounded-lg border border-blue-500/30">
         <i data-lucide="cctv" class="w-5 h-5 md:w-6 md:h-6"></i>
@@ -67,14 +58,14 @@
       </div>
     </div>
 
-    <!-- ปุ่มสลับมุมมอง & ปุ่ม Refresh -->
-    <div class="flex items-center gap-1.5 md:gap-2.5">
-      <div class="bg-slate-800/90 p-0.5 md:p-1 rounded-lg border border-slate-700/60 flex items-center gap-1 text-xs">
-        <button id="nav-map" onclick="switchView('map')" class="flex items-center gap-1 px-2.5 py-1.5 md:px-3 md:py-1.5 rounded-md bg-blue-600 text-white font-medium shadow text-[11px] md:text-xs">
+    <!-- ปุ่มสลับหน้า Map / Dashboard & ปุ่ม Refresh -->
+    <div class="flex items-center gap-2">
+      <div class="bg-slate-800/90 p-1 rounded-lg border border-slate-700/60 flex items-center gap-1 text-xs">
+        <button id="nav-map" onclick="switchView('map')" class="flex items-center gap-1 px-2.5 py-1.5 md:px-3 md:py-1.5 rounded-md bg-blue-600 text-white font-medium shadow text-[11px] md:text-xs transition">
           <i data-lucide="map" class="w-3.5 h-3.5"></i>
           <span>แผนที่</span>
         </button>
-        <button id="nav-dash" onclick="switchView('dashboard')" class="flex items-center gap-1 px-2.5 py-1.5 md:px-3 md:py-1.5 rounded-md text-slate-300 hover:text-white text-[11px] md:text-xs">
+        <button id="nav-dash" onclick="switchView('dashboard')" class="flex items-center gap-1 px-2.5 py-1.5 md:px-3 md:py-1.5 rounded-md text-slate-300 hover:text-white text-[11px] md:text-xs transition">
           <i data-lucide="layout-dashboard" class="w-3.5 h-3.5"></i>
           <span>สรุป</span>
         </button>
@@ -82,51 +73,54 @@
 
       <!-- สถิติย่อบน Header (แสดงเฉพาะจอใหญ่) -->
       <div class="hidden lg:flex items-center gap-2 text-xs font-medium border-l border-slate-800 pl-2.5">
-        <div class="bg-slate-800 border border-slate-700 px-2 py-1 rounded-lg flex items-center gap-1.5">
+        <div class="bg-slate-800 border border-slate-700 px-2.5 py-1 rounded-lg flex items-center gap-1.5">
           <span class="text-slate-400">ทั้งหมด:</span>
           <span id="stat-total" class="font-bold text-white">0</span>
         </div>
-        <div class="bg-emerald-950/60 border border-emerald-700/50 text-emerald-300 px-2 py-1 rounded-lg flex items-center gap-1.5">
+        <div class="bg-emerald-950/60 border border-emerald-700/50 text-emerald-300 px-2.5 py-1 rounded-lg flex items-center gap-1.5">
           <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
           <span>Online:</span>
           <span id="stat-online" class="font-bold">0</span>
         </div>
-        <div class="bg-rose-950/60 border border-rose-700/50 text-rose-300 px-2 py-1 rounded-lg flex items-center gap-1.5">
+        <div class="bg-rose-950/60 border border-rose-700/50 text-rose-300 px-2.5 py-1 rounded-lg flex items-center gap-1.5">
           <span class="w-2 h-2 rounded-full bg-rose-500"></span>
           <span>Offline:</span>
           <span id="stat-offline" class="font-bold">0</span>
         </div>
       </div>
 
-      <button onclick="fetchSheetData()" title="รีเฟรชข้อมูล" class="p-1.5 md:p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700">
+      <button onclick="fetchSheetData()" title="รีเฟรชข้อมูล" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700 transition">
         <i data-lucide="refresh-cw" class="w-4 h-4" id="refresh-icon"></i>
       </button>
     </div>
   </header>
 
   <!-- หน้าที่ 1: Map View -->
-  <div id="view-map" class="flex flex-col md:flex-row flex-1 overflow-hidden relative">
+  <div id="view-map" class="flex flex-1 overflow-hidden relative">
     
-    <!-- ปุ่ม Toggle เปิด/ปิด รายการกล้องบนมือถือ -->
-    <div class="md:hidden absolute top-3 left-3 z-[1000]">
-      <button onclick="toggleMobileSidebar()" id="btn-mobile-sidebar" class="bg-slate-900/90 backdrop-blur text-white px-3 py-2 rounded-lg border border-slate-700 shadow-lg flex items-center gap-2 text-xs font-medium">
-        <i data-lucide="list" class="w-4 h-4"></i>
+    <!-- ปุ่มเรียกเปิด Sidebar บนจอมือถือ (ยก z-index ลอยเหนือแผนที่) -->
+    <div class="md:hidden absolute top-3 left-3 z-[1100]">
+      <button onclick="openMobileSidebar()" class="bg-slate-900/95 text-white px-3.5 py-2 rounded-lg border border-slate-700 shadow-xl flex items-center gap-2 text-xs font-medium active:scale-95 transition">
+        <i data-lucide="list" class="w-4 h-4 text-blue-400"></i>
         <span>รายการกล้อง</span>
-        <span id="mobile-badge-count" class="bg-blue-600 px-1.5 py-0.2 rounded-full text-[10px]">0</span>
+        <span id="mobile-badge-count" class="bg-blue-600 px-1.5 py-0.5 rounded-full text-[10px] font-bold">0</span>
       </button>
     </div>
 
-    <!-- Sidebar บนคอมฯ จะอยู่ซ้ายมือ / บนมือถือจะเป็น Drawer เลื่อนขึ้นมาทับแผนที่ -->
-    <aside id="sidebar-container" class="hidden md:flex flex-col w-full md:w-96 bg-slate-900 md:bg-slate-900/95 backdrop-blur border-r border-slate-800 shrink-0 z-20 absolute md:static inset-0 md:inset-auto h-full">
+    <!-- ฉากหลังสีมืดเวลาเปิด Sidebar ในมือถือ (คลิกเพื่อปิด) -->
+    <div id="sidebar-backdrop" onclick="closeMobileSidebar()" class="hidden md:hidden fixed inset-0 bg-black/60 z-[1900] backdrop-blur-sm transition-opacity"></div>
+
+    <!-- Sidebar: จอคอมเป็นแผงซ้ายมือปกติ / จอมือถือเป็น Drawer ลอยทับแบบเลื่อนเปิดได้ -->
+    <aside id="sidebar-container" class="fixed md:static inset-y-0 left-0 w-80 sm:w-96 bg-slate-900 md:bg-slate-900/95 backdrop-blur border-r border-slate-800 flex flex-col shrink-0 z-[2000] md:z-10 transition-transform duration-300 -translate-x-full md:translate-x-0 h-full">
       <div class="p-3 border-b border-slate-800 space-y-2.5">
         
-        <!-- แถบปิด Sidebar บนมือถือ -->
-        <div class="flex md:hidden items-center justify-between pb-1 border-b border-slate-800">
-          <span class="font-bold text-sm text-white flex items-center gap-1.5">
-            <i data-lucide="list-filter" class="w-4 h-4 text-blue-400"></i> ตัวกรอง & รายการกล้อง
+        <!-- แถบด้านบนของ Sidebar บนมือถือ (พร้อมปุ่มปิด X) -->
+        <div class="flex md:hidden items-center justify-between pb-2 border-b border-slate-800">
+          <span class="font-bold text-sm text-white flex items-center gap-2">
+            <i data-lucide="cctv" class="w-4 h-4 text-blue-400"></i> รายการจุดตรวจการณ์
           </span>
-          <button onclick="toggleMobileSidebar()" class="p-1 text-slate-400 hover:text-white">
-            <i data-lucide="x" class="w-5 h-5"></i>
+          <button onclick="closeMobileSidebar()" class="p-1.5 text-slate-400 hover:text-white bg-slate-800 rounded-lg">
+            <i data-lucide="x" class="w-4 h-4"></i>
           </button>
         </div>
 
@@ -143,13 +137,13 @@
 
         <!-- ตัวกรองสถานะ -->
         <div class="grid grid-cols-3 gap-1.5 p-1 bg-slate-800/80 border border-slate-700/50 rounded-lg text-xs text-center font-medium">
-          <button onclick="setStatusFilter('ALL')" id="filter-all" class="py-1.5 rounded-md bg-blue-600 text-white font-semibold shadow transition">ทั้งหมด</button>
-          <button onclick="setStatusFilter('Online')" id="filter-online" class="py-1.5 rounded-md text-slate-300 hover:text-white transition">Online</button>
-          <button onclick="setStatusFilter('Offline')" id="filter-offline" class="py-1.5 rounded-md text-slate-300 hover:text-white transition">Offline</button>
+          <button onclick="setStatusFilter('ALL')" id="filter-all" class="py-1.5 rounded-md bg-blue-600 text-white font-semibold shadow">ทั้งหมด</button>
+          <button onclick="setStatusFilter('Online')" id="filter-online" class="py-1.5 rounded-md text-slate-300">Online</button>
+          <button onclick="setStatusFilter('Offline')" id="filter-offline" class="py-1.5 rounded-md text-slate-300">Offline</button>
         </div>
 
         <!-- ตัวกรองประเภทกล้อง -->
-        <select id="type-filter" onchange="applyFilters()" class="w-full bg-slate-800 border border-slate-700 text-slate-300 text-xs rounded-lg px-2 py-1.5 focus:outline-none">
+        <select id="type-filter" onchange="applyFilters()" class="w-full bg-slate-800 border border-slate-700 text-slate-300 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none">
           <option value="ALL">ทุกประเภท (4G, Wifi, ยุทธวิธี)</option>
           <option value="4G">เฉพาะกล้อง 4G</option>
           <option value="Wifi">เฉพาะกล้อง Wifi</option>
@@ -163,8 +157,8 @@
       </div>
     </aside>
 
-    <!-- Map Container -->
-    <main class="flex-1 relative h-full">
+    <!-- แผนที่ Leaflet -->
+    <main class="flex-1 relative h-full w-full">
       <div id="map" class="w-full h-full"></div>
     </main>
   </div>
@@ -219,10 +213,10 @@
                   <th class="py-2 text-center">รวม</th>
                   <th class="py-2 text-center text-emerald-400">On</th>
                   <th class="py-2 text-center text-rose-400">Off</th>
-                  <th class="py-2 text-right">ความพร้อม</th>
+                  <th class="py-2 text-right">%</th>
                 </tr>
               </thead>
-              <tbody id="dash-station-table" class="divide-y divide-slate-800/60"></tbody>
+              <tbody id="dash-station-table" class="divide-y border-slate-800/60"></tbody>
             </table>
           </div>
         </div>
@@ -237,7 +231,7 @@
 
     </div>
   </div>
-  
+
   <script>
     // URL CSV ที่เชื่อมตรงกับชีต "ตารางรวม" (gid=649862841)
     const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSMp9mKQv4IFkOiJWWhXPqyEQAEl5rCYym5-qN_-nz4vjoxyzoZhOxW9iqRP5GKxxMWCh12xlFiJgiH/pub?gid=649862841&single=true&output=csv";
@@ -247,19 +241,20 @@
     let currentView = "map";
     let map;
     let markersLayer = L.layerGroup();
-    let isMobileSidebarOpen = false;
 
     // เปิด/ปิด Sidebar บนจอมือถือ
-    function toggleMobileSidebar() {
+    function openMobileSidebar() {
       const sidebar = document.getElementById("sidebar-container");
-      isMobileSidebarOpen = !isMobileSidebarOpen;
-      if (isMobileSidebarOpen) {
-        sidebar.classList.remove("hidden");
-        sidebar.classList.add("flex");
-      } else {
-        sidebar.classList.add("hidden");
-        sidebar.classList.remove("flex");
-      }
+      const backdrop = document.getElementById("sidebar-backdrop");
+      sidebar.classList.remove("-translate-x-full");
+      backdrop.classList.remove("hidden");
+    }
+
+    function closeMobileSidebar() {
+      const sidebar = document.getElementById("sidebar-container");
+      const backdrop = document.getElementById("sidebar-backdrop");
+      sidebar.classList.add("-translate-x-full");
+      backdrop.classList.add("hidden");
     }
 
     // สลับหน้า Map / Dashboard
@@ -274,15 +269,15 @@
         mapContainer.classList.remove("hidden");
         mapContainer.classList.add("flex");
         dashContainer.classList.add("hidden");
-        btnMap.className = "flex items-center gap-1 px-2.5 py-1.5 md:px-3 md:py-1.5 rounded-md bg-blue-600 text-white font-medium shadow text-[11px] md:text-xs";
-        btnDash.className = "flex items-center gap-1 px-2.5 py-1.5 md:px-3 md:py-1.5 rounded-md text-slate-300 hover:text-white text-[11px] md:text-xs";
+        btnMap.className = "flex items-center gap-1 px-2.5 py-1.5 md:px-3 md:py-1.5 rounded-md bg-blue-600 text-white font-medium shadow text-[11px] md:text-xs transition";
+        btnDash.className = "flex items-center gap-1 px-2.5 py-1.5 md:px-3 md:py-1.5 rounded-md text-slate-300 hover:text-white text-[11px] md:text-xs transition";
         setTimeout(() => map.invalidateSize(), 200);
       } else {
         mapContainer.classList.add("hidden");
         mapContainer.classList.remove("flex");
         dashContainer.classList.remove("hidden");
-        btnDash.className = "flex items-center gap-1 px-2.5 py-1.5 md:px-3 md:py-1.5 rounded-md bg-blue-600 text-white font-medium shadow text-[11px] md:text-xs";
-        btnMap.className = "flex items-center gap-1 px-2.5 py-1.5 md:px-3 md:py-1.5 rounded-md text-slate-300 hover:text-white text-[11px] md:text-xs";
+        btnDash.className = "flex items-center gap-1 px-2.5 py-1.5 md:px-3 md:py-1.5 rounded-md bg-blue-600 text-white font-medium shadow text-[11px] md:text-xs transition";
+        btnMap.className = "flex items-center gap-1 px-2.5 py-1.5 md:px-3 md:py-1.5 rounded-md text-slate-300 hover:text-white text-[11px] md:text-xs transition";
         renderDashboard();
       }
     }
@@ -425,9 +420,9 @@
         `;
 
         card.addEventListener("click", () => {
-          // บนมือถือ เมื่อคลิกกล้องให้ปิด Sidebar แล้วซูมไปที่หมุด
-          if (window.innerWidth < 768 && isMobileSidebarOpen) {
-            toggleMobileSidebar();
+          // หากอยู่ในจอมือถือ เมื่อเลือกกล้องแล้วให้เลื่อนปิด Sidebar ทันทีเพื่อดูแผนที่
+          if (window.innerWidth < 768) {
+            closeMobileSidebar();
           }
           if (cam.lat && cam.lng && !isNaN(cam.lat)) {
             map.flyTo([cam.lat, cam.lng], 16, { duration: 1 });
@@ -553,7 +548,7 @@
     }
 
     // ประมวลผลตัวกรองและช่องค้นหา
-    function applyFilters() {
+    ffunction applyFilters() {
       const q = document.getElementById("search-input").value.toLowerCase();
       const t = document.getElementById("type-filter").value;
 
