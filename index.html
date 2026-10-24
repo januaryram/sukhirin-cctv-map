@@ -139,42 +139,67 @@
     let markersLayer = L.layerGroup();
 
     // เริ่มต้นแผนที่
-    function initMap() {
-      // พิกัดกึ่งกลาง อ.สุคิริน จ.นราธิวาส
-      map = L.map("map", { zoomControl: false }).setView([5.9385, 101.7755], 14);
+    // พิกัดรูปหลายเหลี่ยม (Polygon) ขอบเขตคร่าวๆ ของอำเภอสุคิริน จ.นราธิวาส
+    const sukhirinBoundaryCoords = [
+      [5.9982, 101.6954],
+      [6.0125, 101.7482],
+      [5.9863, 101.8150],
+      [5.9450, 101.8540],
+      [5.8752, 101.8725],
+      [5.8120, 101.8320],
+      [5.7650, 101.7850],
+      [5.7510, 101.7280],
+      [5.7820, 101.6850],
+      [5.8500, 101.6620],
+      [5.9250, 101.6710],
+      [5.9720, 101.6815]
+    ];
 
-      // 1. Google Maps แบบถนนปกติ (Streets/Roadmap)
+    function initMap() {
+      // พิกัดกึ่งกลาง อ.สุคิริน
+      map = L.map("map", { zoomControl: false }).setView([5.9385, 101.7755], 13);
+
+      // 1. Google Maps แบบถนน
       const googleStreets = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
         maxZoom: 20,
         subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
         attribution: '&copy; Google Maps'
       });
 
-      // 2. Google Maps แบบภาพถ่ายดาวเทียมพร้อมชื่อถนน/สถานที่ (Hybrid Satellite)
+      // 2. Google Maps ภาพถ่ายดาวเทียม
       const googleHybrid = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
         maxZoom: 20,
         subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
         attribution: '&copy; Google Maps'
       });
 
-      // 3. OpenStreetMap (แผนที่สำรองฟรี)
-      const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '&copy; OpenStreetMap'
-      });
-
-      // ตั้งค่าให้แสดง Google Maps แบบถนนปกติเป็นค่าเริ่มต้น
       googleStreets.addTo(map);
 
-      // เพิ่มปุ่มเลือกสลับชั้นแผนที่ (มุมขวาบน) สลับดูภาพดาวเทียมหรือถนนได้สะดวก
+      // --- สร้างเลเยอร์สีคลุมพื้นที่ อ.สุคิริน ---
+      const districtPolygon = L.polygon(sukhirinBoundaryCoords, {
+        color: '#2563eb',       // สีกรอบขอบเขต (สีน้ำเงินตำรวจ/กรมท่า)
+        weight: 2.5,            // ความหนาของเส้นขอบ
+        dashArray: '5, 5',      // เส้นประแสดงแนวเขต
+        fillColor: '#3b82f6',   // สีพื้นที่คลุม
+        fillOpacity: 0.18       // ความโปร่งแสง (18% ทำให้เห็นถนน/บ้านข้างใต้ชัดเจน)
+      }).addTo(map);
+
+      districtPolygon.bindTooltip("<b>พื้นที่รับผิดชอบ สภ.สุคิริน</b>", {
+        sticky: true,
+        direction: 'center',
+        className: 'bg-slate-900 text-white px-2 py-1 rounded text-xs border border-slate-700'
+      });
+
+      // สลับชั้นแผนที่
       const baseMaps = {
         "Google แผนที่ถนน": googleStreets,
-        "Google ภาพดาวเทียม": googleHybrid,
-        "OpenStreetMap": osm
+        "Google ภาพดาวเทียม": googleHybrid
       };
-      L.control.layers(baseMaps, null, { position: "topright" }).addTo(map);
+      const overlays = {
+        "ขอบเขต อ.สุคิริน": districtPolygon
+      };
 
-      // ปุ่มซูมเข้า-ออก (มุมขวาล่าง)
+      L.control.layers(baseMaps, overlays, { position: "topright" }).addTo(map);
       L.control.zoom({ position: "bottomright" }).addTo(map);
       markersLayer.addTo(map);
     }
