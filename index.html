@@ -33,6 +33,9 @@
       background-color: #ef4444;
       animation: pulse-red 1.5s infinite;
     }
+    .marker-onoff {
+      background-color: #f59e0b;
+    }
     .leaflet-popup-content-wrapper {
       background: #0f172a !important;
       color: #f8fafc !important;
@@ -93,11 +96,11 @@
             type="text" 
             id="search-input" 
             placeholder="ค้นหาชื่อกล้อง, UID, ป้อม..." 
-            class="w-full bg-slate-800 border border-slate-700 rounded-lg pl-9 pr-3 py-1.5 text-sm text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 transition"
+            class="w-full bg-slate-800 border border-slate-700 rounded-lg pl-9 pr-3 py-1.5 text-sm text-white focus:outline-none focus:border-blue-500"
           />
         </div>
 
-        <!-- ตัวกรองสถานะ 3 ช่องสมดุลสวยงาม -->
+        <!-- ตัวกรองสถานะ -->
         <div class="grid grid-cols-3 gap-1.5 p-1 bg-slate-800/80 border border-slate-700/50 rounded-lg text-xs text-center font-medium">
           <button onclick="setStatusFilter('ALL')" id="filter-all" class="py-1.5 rounded-md bg-blue-600 text-white font-semibold shadow transition">ทั้งหมด</button>
           <button onclick="setStatusFilter('Online')" id="filter-online" class="py-1.5 rounded-md text-slate-300 hover:text-white transition">Online</button>
@@ -105,7 +108,7 @@
         </div>
 
         <!-- ตัวกรองประเภทกล้อง -->
-        <select id="type-filter" onchange="applyFilters()" class="w-full bg-slate-800 border border-slate-700 text-slate-300 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-blue-500 transition">
+        <select id="type-filter" onchange="applyFilters()" class="w-full bg-slate-800 border border-slate-700 text-slate-300 text-xs rounded-lg px-2 py-1.5 focus:outline-none">
           <option value="ALL">ทุกประเภท (4G, Wifi, ยุทธวิธี)</option>
           <option value="4G">เฉพาะกล้อง 4G</option>
           <option value="Wifi">เฉพาะกล้อง Wifi</option>
@@ -126,7 +129,7 @@
   </div>
 
   <script>
-    // URL CSV ที่เชื่อมตรงกับชีต "ตารางรวม"
+    // URL CSV ที่เชื่อมตรงกับชีต "ตารางรวม" (gid=649862841)
     const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSMp9mKQv4IFkOiJWWhXPqyEQAEl5rCYym5-qN_-nz4vjoxyzoZhOxW9iqRP5GKxxMWCh12xlFiJgiH/pub?gid=649862841&single=true&output=csv";
 
     let rawData = [];
@@ -231,14 +234,14 @@
 
       items.forEach(cam => {
         const isOnline = (cam.status || '').toLowerCase() === 'online';
-
+        
         // วาดหมุดบนแผนที่
         if (cam.lat && cam.lng && !isNaN(cam.lat) && !isNaN(cam.lng)) {
           const marker = L.marker([cam.lat, cam.lng], { icon: createCustomMarker(cam.status) });
           marker.bindPopup(`
             <div class="p-1 space-y-1 text-xs">
               <div class="font-bold text-white text-sm border-b border-slate-700 pb-1">${cam.name}</div>
-              <div><b>สถานะ:</b> <span class="${isOnline ? 'text-emerald-400' : 'text-rose-400'} font-semibold">${isOnline ? 'Online' : 'Offline'}</span></div>
+              <div><b>สถานะ:</b> <span class="${(cam.status || '').toLowerCase() === 'online' ? 'text-emerald-400':'text-rose-400'} font-semibold">${cam.status}</span></div>
               <div><b>ประเภท:</b> ${cam.type}</div>
               <div><b>UID:</b> <span class="font-mono text-blue-300 text-[11px]">${cam.uid}</span></div>
               <div><b>ป้อมรับผิดชอบ:</b> ${cam.station}</div>
@@ -267,4 +270,98 @@
 
         card.addEventListener("click", () => {
           if (cam.lat && cam.lng && !isNaN(cam.lat)) {
-            map.flyTo([cam.lat, cam.lng], 16, { duration
+            map.flyTo([cam.lat, cam.lng], 16, { duration: 1 });
+            if (cam._marker) setTimeout(() => cam._marker.openPopup(), 1000);
+          }
+        });
+
+        listContainer.appendChild(card);
+      });
+      lucide.createIcons();
+    }
+    
+    // ตัวกรองสถานะ (ทั้งหมด, Online, Offline)
+    function setStatusFilter(status) {
+      selectedStatusFilter = status;
+      ['all', 'online', 'offline'].forEach(key => {
+        const btn = document.getElementById(`filter-${key}`);
+        if (key.toLowerCase() === status.toLowerCase() || (key === 'all' && status === 'ALL')) {
+          btn.className = "py-1.5 rounded-md bg-blue-600 text-white font-semibold shadow transition";
+        } else {
+          btn.className = "py-1.5 rounded-md text-slate-300 hover:text-white transition";
+        }
+      });
+      applyFilters();
+    }
+
+    // ประมวลผลตัวกรองและช่องค้นหา
+    function applyFilters() {
+      const q = document.getElementById("search-input").value.toLowerCase();
+      const t = document.getElementById("type-filter").value;
+
+      const filtered = rawData.filter(cam => {
+        const isOnline = (cam.status || "").toLowerCase() === "online";
+        const matchStatus = (selectedStatusFilter === "ALL") || 
+          (selectedStatusFilter === "Online" && isOnline) ||
+          (selectedStatusFilter === "Offline" && !isOnline);
+
+        const matchType = (t === "ALL") || (cam.type === t);
+        const matchSearch = (cam.name || "").toLowerCase().includes(q) || 
+                            (cam.uid || "").toLowerCase().includes(q) || 
+                            (cam.station || "").toLowerCase().includes(q);
+
+        return matchStatus && matchType && matchSearch;
+      });
+
+      renderApp(filtered);
+    }
+
+    // ดึงข้อมูลสดจาก Google Sheet (Live Sync)
+    function fetchSheetData() {
+      const refreshIcon = document.getElementById("refresh-icon");
+      if (refreshIcon) refreshIcon.classList.add("animate-spin");
+
+      // ใส่ timestamp ป้องกันเบราว์เซอร์จำ cache เก่า
+      const liveUrl = CSV_URL + "&t=" + Date.now();
+
+      Papa.parse(liveUrl, {
+        download: true,
+        header: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+          if (results.data && results.data.length > 0) {
+            rawData = results.data
+              .filter(row => row["ชื่อกล้อง / จุดติดตั้ง"] && row["ชื่อกล้อง / จุดติดตั้ง"].trim() !== "")
+              .map((row, idx) => ({
+                id: row["ลำดับ"] || idx + 1,
+                station: row["ป้อมที่รับผิดชอบ"] || "-",
+                name: row["ชื่อกล้อง / จุดติดตั้ง"],
+                type: row["ประเภทกล้อง"] || "4G",
+                uid: row["UID กล้อง"] || "-",
+                lat: parseFloat(row["ละติจูด (Lat)"]),
+                lng: parseFloat(row["ลองจิจูด (Lng)"]),
+                status: (row["สถานะกล้อง"] || "Offline").trim()
+              }));
+          }
+          if (refreshIcon) refreshIcon.classList.remove("animate-spin");
+          applyFilters();
+        },
+        error: function(err) {
+          console.error("เกิดข้อผิดพลาดในการดึงข้อมูล:", err);
+          if (refreshIcon) refreshIcon.classList.remove("animate-spin");
+        }
+      });
+    }
+
+    document.getElementById("search-input").addEventListener("input", applyFilters);
+
+    window.addEventListener("DOMContentLoaded", () => {
+      initMap();
+      fetchSheetData(); // ดึงข้อมูลทันทีเมื่อเปิดเว็บ
+
+      // ซิงค์ข้อมูลใหม่อัตโนมัติทุกๆ 60 วินาที
+      setInterval(fetchSheetData, 60000);
+    });
+  </script>
+</body>
+</html>
