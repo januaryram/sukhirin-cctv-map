@@ -33,9 +33,6 @@
       background-color: #ef4444;
       animation: pulse-red 1.5s infinite;
     }
-    .marker-onoff {
-      background-color: #f59e0b;
-    }
     .leaflet-popup-content-wrapper {
       background: #0f172a !important;
       color: #f8fafc !important;
@@ -96,19 +93,19 @@
             type="text" 
             id="search-input" 
             placeholder="ค้นหาชื่อกล้อง, UID, ป้อม..." 
-            class="w-full bg-slate-800 border border-slate-700 rounded-lg pl-9 pr-3 py-1.5 text-sm text-white focus:outline-none focus:border-blue-500"
+            class="w-full bg-slate-800 border border-slate-700 rounded-lg pl-9 pr-3 py-1.5 text-sm text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 transition"
           />
         </div>
 
-        <!-- ตัวกรองสถานะ -->
-        <div class="grid grid-cols-4 gap-1 p-1 bg-slate-800 rounded-lg text-xs text-center font-medium">
-          <button onclick="setStatusFilter('ALL')" id="filter-all" class="py-1 rounded bg-blue-600 text-white font-semibold">ทั้งหมด</button>
-          <button onclick="setStatusFilter('Online')" id="filter-online" class="py-1 rounded text-slate-300">Online</button>
-          <button onclick="setStatusFilter('Offline')" id="filter-offline" class="py-1 rounded text-slate-300">Offline</button>
+        <!-- ตัวกรองสถานะ 3 ช่องสมดุลสวยงาม -->
+        <div class="grid grid-cols-3 gap-1.5 p-1 bg-slate-800/80 border border-slate-700/50 rounded-lg text-xs text-center font-medium">
+          <button onclick="setStatusFilter('ALL')" id="filter-all" class="py-1.5 rounded-md bg-blue-600 text-white font-semibold shadow transition">ทั้งหมด</button>
+          <button onclick="setStatusFilter('Online')" id="filter-online" class="py-1.5 rounded-md text-slate-300 hover:text-white transition">Online</button>
+          <button onclick="setStatusFilter('Offline')" id="filter-offline" class="py-1.5 rounded-md text-slate-300 hover:text-white transition">Offline</button>
         </div>
 
         <!-- ตัวกรองประเภทกล้อง -->
-        <select id="type-filter" onchange="applyFilters()" class="w-full bg-slate-800 border border-slate-700 text-slate-300 text-xs rounded-lg px-2 py-1.5 focus:outline-none">
+        <select id="type-filter" onchange="applyFilters()" class="w-full bg-slate-800 border border-slate-700 text-slate-300 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-blue-500 transition">
           <option value="ALL">ทุกประเภท (4G, Wifi, ยุทธวิธี)</option>
           <option value="4G">เฉพาะกล้อง 4G</option>
           <option value="Wifi">เฉพาะกล้อง Wifi</option>
@@ -129,27 +126,24 @@
   </div>
 
   <script>
-    // URL CSV ที่เชื่อมตรงกับชีต "ตารางรวม" (gid=649862841)
-    const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSMp9mKQv4IFkOiJWWhXPqyEQAEl5rCYym5-qN_-nz4vjoxyzoZhOxW9iqRP5GKxxMWCh12xlFiJgiH/pub?gid=649862841&single=true&output=csv";
+    // URL CSV ที่เชื่อมตรงกับชีต "ตารางรวม"
+    const CSV_URL = "https://docs.google.com/spreadsheets/d/10_WES6R51gGtu7MqgyGI3CETt4zZX9RQzgzSr9xiiRs/gviz/tq?tqx=out:csv&gid=649862841";
 
     let rawData = [];
     let selectedStatusFilter = "ALL";
     let map;
     let markersLayer = L.layerGroup();
 
-    // เริ่มต้นแผนที่
+    // เริ่มต้นแผนที่ด้วย Google Maps + GeoJSON อ.สุคิริน
     function initMap() {
-      // 1. ตั้งค่าแผนที่เริ่มต้น
       map = L.map("map", { zoomControl: false }).setView([5.9385, 101.7755], 13);
 
-      // Google Maps ถนนปกติ
       const googleStreets = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
         maxZoom: 20,
         subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
         attribution: '&copy; Google Maps'
       });
 
-      // Google Maps ภาพดาวเทียม
       const googleHybrid = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
         maxZoom: 20,
         subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
@@ -158,78 +152,55 @@
 
       googleStreets.addTo(map);
 
-      // 2. โหลดไฟล์ GeoJSON ขอบเขตพื้นที่ อ.สุคิริน
+      // โหลดขอบเขตตำบล อ.สุคิริน (ถ้ามีไฟล์ใน repo)
       const boundaryLayer = L.geoJSON(null, {
-        style: function (feature) {
-          return {
-            color: '#1d4ed8',       // สีเส้นขอบ (น้ำเงินเข้ม)
-            weight: 2,              // ความหนาเส้น
-            dashArray: '4, 4',       // ลายเส้นประแสดงแนวเขต
-            fillColor: '#3b82f6',    // สีคลุมพื้นที่ (ฟ้าอ่อน)
-            fillOpacity: 0.18        // ความโปร่งแสง 18% (ยังมองเห็นถนนและบ้านชัดเจน)
-          };
+        style: {
+          color: '#2563eb',
+          weight: 2,
+          dashArray: '4, 4',
+          fillColor: '#3b82f6',
+          fillOpacity: 0.16
         },
         onEachFeature: function (feature, layer) {
-          // ดึงชื่อตำบลมาแสดง (รองรับทั้งชื่อจากคลัง OSM, GISTDA, กรมการปกครอง)
           const p = feature.properties || {};
-          const subdistrictName = p.tam_th || p.name || p.NAME_TH || p.SUB_DIST_T || p.admin_name || "ตำบลใน อ.สุคิริน";
-
-          // แสดงป้ายชื่อตำบลเมื่อนำเมาส์ไปชี้หรือกด
-          layer.bindTooltip(`<b>${subdistrictName}</b>`, {
+          const name = p.tam_th || p.name || p.NAME_TH || p.SUB_DIST_T || "ตำบลใน อ.สุคิริน";
+          layer.bindTooltip(`<b>${name}</b>`, {
             sticky: true,
             direction: 'center',
             className: 'bg-slate-900 text-white px-2 py-1 rounded text-xs border border-slate-700 shadow-md font-sans'
           });
-
-          // เอฟเฟกต์ไฮไลต์เมื่อนำเมาส์ชี้
-          layer.on({
-            mouseover: function (e) {
-              e.target.setStyle({ fillOpacity: 0.35, weight: 2.5 });
-            },
-            mouseout: function (e) {
-              boundaryLayer.resetStyle(e.target);
-            }
-          });
         }
       }).addTo(map);
 
-      // ดึงไฟล์ GeoJSON
       fetch('sukhirin-subdistricts.geojson')
-        .then(response => {
-          if (!response.ok) throw new Error("โหลดไฟล์ GeoJSON ไม่สำเร็จ");
-          return response.json();
-        })
+        .then(res => res.ok ? res.json() : null)
         .then(data => {
-          boundaryLayer.addData(data);
-          // ปรับมุมมองแผนที่ให้ครอบคลุมขอบเขตอำเภอพอดีโดยอัตโนมัติ
-          if (boundaryLayer.getBounds().isValid()) {
-            map.fitBounds(boundaryLayer.getBounds(), { padding: [20, 20] });
+          if (data) {
+            boundaryLayer.addData(data);
+            if (boundaryLayer.getBounds().isValid()) {
+              map.fitBounds(boundaryLayer.getBounds(), { padding: [20, 20] });
+            }
           }
         })
-        .catch(err => console.error("GeoJSON Error:", err));
+        .catch(() => {});
 
-      // 3. เพิ่มแถบเมนูสลับเลเยอร์มุมขวาบน
       const baseMaps = {
         "Google แผนที่ถนน": googleStreets,
         "Google ภาพดาวเทียม": googleHybrid
       };
       const overlays = {
-        "ขอบเขตพื้นที่ อ.สุคิริน": boundaryLayer
+        "ขอบเขต อ.สุคิริน": boundaryLayer
       };
       L.control.layers(baseMaps, overlays, { position: "topright" }).addTo(map);
 
-      // ปุ่มควบคุม
       L.control.zoom({ position: "bottomright" }).addTo(map);
       markersLayer.addTo(map);
     }
 
-    // สร้างไอคอนหมุดตามสถานะ
+    // สร้างไอคอนหมุด (Online เขียว / Offline แดง)
     function createCustomMarker(status) {
-      let colorClass = "marker-online";
-      const s = (status || "").toLowerCase();
-      if (s.includes("off")) {
-        colorClass = (s === "on/off") ? "marker-onoff" : "marker-offline";
-      }
+      const isOnline = (status || "").toLowerCase() === "online";
+      const colorClass = isOnline ? "marker-online" : "marker-offline";
 
       return L.divIcon({
         className: "custom-pin",
@@ -247,25 +218,27 @@
 
       const total = rawData.length;
       const online = rawData.filter(c => (c.status || "").toLowerCase() === "online").length;
-      const offline = rawData.filter(c => (c.status || "").toLowerCase().includes("off") && (c.status || "") !== "On/Off").length;
+      const offline = total - online;
 
       document.getElementById("stat-total").innerText = total;
       document.getElementById("stat-online").innerText = online;
       document.getElementById("stat-offline").innerText = offline;
 
       if (items.length === 0) {
-        listContainer.innerHTML = `<div class="text-center py-10 text-slate-500 text-xs">ไม่พบรายการที่ค้นหา</div>`;
+        listContainer.innerHTML = `<div class="text-center py-10 text-slate-500 text-xs">ไม่พบรายการกล้องที่ค้นหา</div>`;
         return;
       }
 
       items.forEach(cam => {
+        const isOnline = (cam.status || '').toLowerCase() === 'online';
+
         // วาดหมุดบนแผนที่
         if (cam.lat && cam.lng && !isNaN(cam.lat) && !isNaN(cam.lng)) {
           const marker = L.marker([cam.lat, cam.lng], { icon: createCustomMarker(cam.status) });
           marker.bindPopup(`
             <div class="p-1 space-y-1 text-xs">
               <div class="font-bold text-white text-sm border-b border-slate-700 pb-1">${cam.name}</div>
-              <div><b>สถานะ:</b> <span class="${(cam.status || '').toLowerCase() === 'online' ? 'text-emerald-400':'text-rose-400'} font-semibold">${cam.status}</span></div>
+              <div><b>สถานะ:</b> <span class="${isOnline ? 'text-emerald-400' : 'text-rose-400'} font-semibold">${isOnline ? 'Online' : 'Offline'}</span></div>
               <div><b>ประเภท:</b> ${cam.type}</div>
               <div><b>UID:</b> <span class="font-mono text-blue-300 text-[11px]">${cam.uid}</span></div>
               <div><b>ป้อมรับผิดชอบ:</b> ${cam.station}</div>
@@ -276,15 +249,14 @@
         }
 
         // การ์ดรายการในแถบด้านข้าง
-        const isOnline = (cam.status || '').toLowerCase() === 'online';
         const card = document.createElement("div");
-        card.className = "p-2.5 rounded-lg bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 transition cursor-pointer";
+        card.className = "p-2.5 rounded-lg bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 hover:border-slate-600 transition cursor-pointer";
         card.innerHTML = `
           <div class="flex items-start justify-between gap-1">
             <span class="font-semibold text-xs text-slate-100">${cam.name}</span>
             <span class="text-[10px] px-1.5 py-0.5 rounded font-semibold ${
-              isOnline ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'
-            }">${cam.status}</span>
+              isOnline ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+            }">${isOnline ? 'Online' : 'Offline'}</span>
           </div>
           <div class="text-[11px] text-slate-400 font-mono mt-0.5">${cam.uid}</div>
           <div class="flex justify-between text-[10px] text-slate-400 mt-2 pt-1.5 border-t border-slate-700/40">
@@ -295,99 +267,4 @@
 
         card.addEventListener("click", () => {
           if (cam.lat && cam.lng && !isNaN(cam.lat)) {
-            map.flyTo([cam.lat, cam.lng], 16, { duration: 1 });
-            if (cam._marker) setTimeout(() => cam._marker.openPopup(), 1000);
-          }
-        });
-
-        listContainer.appendChild(card);
-      });
-      lucide.createIcons();
-    }
-
-    // ตัวกรองสถานะ
-    function setStatusFilter(status) {
-      selectedStatusFilter = status;
-      ['all', 'online', 'offline', 'onoff'].forEach(key => {
-        const btn = document.getElementById(`filter-${key}`);
-        if (key.toLowerCase() === status.toLowerCase() || (key === 'all' && status === 'ALL')) {
-          btn.className = "py-1 rounded bg-blue-600 text-white font-semibold shadow";
-        } else {
-          btn.className = "py-1 rounded text-slate-300 hover:text-white";
-        }
-      });
-      applyFilters();
-    }
-
-    // ประมวลผลตัวกรองและช่องค้นหา
-    function applyFilters() {
-      const q = document.getElementById("search-input").value.toLowerCase();
-      const t = document.getElementById("type-filter").value;
-
-      const filtered = rawData.filter(cam => {
-        const s = (cam.status || "").toLowerCase();
-        const matchStatus = (selectedStatusFilter === "ALL") || 
-          (selectedStatusFilter === "Online" && s === "online") ||
-          (selectedStatusFilter === "Offline" && s.includes("off") && cam.status !== "On/Off") ||
-          (selectedStatusFilter === "On/Off" && cam.status === "On/Off");
-
-        const matchType = (t === "ALL") || (cam.type === t);
-        const matchSearch = (cam.name || "").toLowerCase().includes(q) || 
-                            (cam.uid || "").toLowerCase().includes(q) || 
-                            (cam.station || "").toLowerCase().includes(q);
-
-        return matchStatus && matchType && matchSearch;
-      });
-
-      renderApp(filtered);
-    }
-
-    // ดึงข้อมูลสดจาก Google Sheet (Live Sync)
-    function fetchSheetData() {
-      const refreshIcon = document.getElementById("refresh-icon");
-      if (refreshIcon) refreshIcon.classList.add("animate-spin");
-
-      // ใส่ timestamp ป้องกันเบราว์เซอร์จำ cache เก่า
-      const liveUrl = CSV_URL + "&t=" + Date.now();
-
-      Papa.parse(liveUrl, {
-        download: true,
-        header: true,
-        skipEmptyLines: true,
-        complete: function(results) {
-          if (results.data && results.data.length > 0) {
-            rawData = results.data
-              .filter(row => row["ชื่อกล้อง / จุดติดตั้ง"] && row["ชื่อกล้อง / จุดติดตั้ง"].trim() !== "")
-              .map((row, idx) => ({
-                id: row["ลำดับ"] || idx + 1,
-                station: row["ป้อมที่รับผิดชอบ"] || "-",
-                name: row["ชื่อกล้อง / จุดติดตั้ง"],
-                type: row["ประเภทกล้อง"] || "4G",
-                uid: row["UID กล้อง"] || "-",
-                lat: parseFloat(row["ละติจูด (Lat)"]),
-                lng: parseFloat(row["ลองจิจูด (Lng)"]),
-                status: (row["สถานะกล้อง"] || "Offline").trim()
-              }));
-          }
-          if (refreshIcon) refreshIcon.classList.remove("animate-spin");
-          applyFilters();
-        },
-        error: function(err) {
-          console.error("เกิดข้อผิดพลาดในการดึงข้อมูล:", err);
-          if (refreshIcon) refreshIcon.classList.remove("animate-spin");
-        }
-      });
-    }
-
-    document.getElementById("search-input").addEventListener("input", applyFilters);
-
-    window.addEventListener("DOMContentLoaded", () => {
-      initMap();
-      fetchSheetData(); // ดึงข้อมูลทันทีเมื่อเปิดเว็บ
-
-      // ซิงค์ข้อมูลใหม่อัตโนมัติทุกๆ 60 วินาที
-      setInterval(fetchSheetData, 60000);
-    });
-  </script>
-</body>
-</html>
+            map.flyTo([cam.lat, cam.lng], 16, { duration
