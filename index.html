@@ -25,6 +25,11 @@
       70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
       100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
     }
+    @keyframes pulse-amber {
+      0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.8); }
+      70% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+    }
     .marker-online {
       background-color: #22c55e;
       animation: pulse-green 2s infinite;
@@ -32,6 +37,10 @@
     .marker-offline {
       background-color: #ef4444;
       animation: pulse-red 1.5s infinite;
+    }
+    .marker-onoff {
+      background-color: #f59e0b;
+      animation: pulse-amber 2s infinite;
     }
     .leaflet-popup-content-wrapper {
       background: #0f172a !important;
@@ -41,11 +50,6 @@
     }
     .leaflet-popup-tip {
       background: #0f172a !important;
-    }
-    
-    /* ซ่อน Scrollbar แนวนอนในมือถือ */
-    .no-scrollbar::-webkit-scrollbar {
-      display: none;
     }
     .no-scrollbar {
       -ms-overflow-style: none;
@@ -82,19 +86,24 @@
 
       <!-- สถิติย่อบน Header (แสดงเฉพาะจอใหญ่) -->
       <div class="hidden lg:flex items-center gap-2 text-xs font-medium border-l border-slate-800 pl-2.5">
-        <div class="bg-slate-800 border border-slate-700 px-2 py-1 rounded-lg flex items-center gap-1.5">
+        <div class="bg-slate-800 border border-slate-700 px-2.5 py-1 rounded-lg flex items-center gap-1.5">
           <span class="text-slate-400">ทั้งหมด:</span>
           <span id="stat-total" class="font-bold text-white">0</span>
         </div>
-        <div class="bg-emerald-950/60 border border-emerald-700/50 text-emerald-300 px-2 py-1 rounded-lg flex items-center gap-1.5">
+        <div class="bg-emerald-950/60 border border-emerald-700/50 text-emerald-300 px-2.5 py-1 rounded-lg flex items-center gap-1.5">
           <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
           <span>Online:</span>
           <span id="stat-online" class="font-bold">0</span>
         </div>
-        <div class="bg-rose-950/60 border border-rose-700/50 text-rose-300 px-2 py-1 rounded-lg flex items-center gap-1.5">
+        <div class="bg-rose-950/60 border border-rose-700/50 text-rose-300 px-2.5 py-1 rounded-lg flex items-center gap-1.5">
           <span class="w-2 h-2 rounded-full bg-rose-500"></span>
           <span>Offline:</span>
           <span id="stat-offline" class="font-bold">0</span>
+        </div>
+        <div class="bg-amber-950/60 border border-amber-700/50 text-amber-300 px-2.5 py-1 rounded-lg flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+          <span>On/Off:</span>
+          <span id="stat-onoff" class="font-bold">0</span>
         </div>
       </div>
 
@@ -108,16 +117,19 @@
   <div id="view-map" class="flex flex-col md:flex-row flex-1 overflow-hidden relative">
     
     <!-- ปุ่ม Toggle เปิด/ปิด รายการกล้องบนมือถือ -->
-    <div class="md:hidden absolute top-3 left-3 z-[1000]">
-      <button onclick="toggleMobileSidebar()" id="btn-mobile-sidebar" class="bg-slate-900/90 backdrop-blur text-white px-3 py-2 rounded-lg border border-slate-700 shadow-lg flex items-center gap-2 text-xs font-medium">
-        <i data-lucide="list" class="w-4 h-4"></i>
+    <div class="md:hidden absolute top-3 left-3 z-[1100]">
+      <button onclick="openMobileSidebar()" class="bg-slate-900/95 text-white px-3 py-2 rounded-lg border border-slate-700 shadow-xl flex items-center gap-2 text-xs font-medium active:scale-95 transition">
+        <i data-lucide="list" class="w-4 h-4 text-blue-400"></i>
         <span>รายการกล้อง</span>
-        <span id="mobile-badge-count" class="bg-blue-600 px-1.5 py-0.2 rounded-full text-[10px]">0</span>
+        <span id="mobile-badge-count" class="bg-blue-600 px-1.5 py-0.2 rounded-full text-[10px] font-bold">0</span>
       </button>
     </div>
 
-    <!-- Sidebar บนคอมฯ จะอยู่ซ้ายมือ / บนมือถือจะเป็น Drawer เลื่อนขึ้นมาทับแผนที่ -->
-    <aside id="sidebar-container" class="hidden md:flex flex-col w-full md:w-96 bg-slate-900 md:bg-slate-900/95 backdrop-blur border-r border-slate-800 shrink-0 z-20 absolute md:static inset-0 md:inset-auto h-full">
+    <!-- Backdrop สำหรับมือถือ -->
+    <div id="sidebar-backdrop" onclick="closeMobileSidebar()" class="hidden md:hidden fixed inset-0 bg-black/60 z-[1900] backdrop-blur-sm transition-opacity"></div>
+
+    <!-- Sidebar รายการกล้อง -->
+    <aside id="sidebar-container" class="fixed md:static inset-y-0 left-0 w-80 sm:w-96 bg-slate-900 md:bg-slate-900/95 backdrop-blur border-r border-slate-800 flex flex-col shrink-0 z-[2000] md:z-10 transition-transform duration-300 -translate-x-full md:translate-x-0 h-full">
       <div class="p-3 border-b border-slate-800 space-y-2.5">
         
         <!-- แถบปิด Sidebar บนมือถือ -->
@@ -125,7 +137,7 @@
           <span class="font-bold text-sm text-white flex items-center gap-1.5">
             <i data-lucide="list-filter" class="w-4 h-4 text-blue-400"></i> ตัวกรอง & รายการกล้อง
           </span>
-          <button onclick="toggleMobileSidebar()" class="p-1 text-slate-400 hover:text-white">
+          <button onclick="closeMobileSidebar()" class="p-1 text-slate-400 hover:text-white">
             <i data-lucide="x" class="w-5 h-5"></i>
           </button>
         </div>
@@ -141,15 +153,16 @@
           />
         </div>
 
-        <!-- ตัวกรองสถานะ -->
-        <div class="grid grid-cols-3 gap-1.5 p-1 bg-slate-800/80 border border-slate-700/50 rounded-lg text-xs text-center font-medium">
+        <!-- ตัวกรองสถานะ 4 ปุ่ม (ทั้งหมด / Online / Offline / On/Off) -->
+        <div class="grid grid-cols-4 gap-1 p-1 bg-slate-800/80 border border-slate-700/50 rounded-lg text-xs text-center font-medium">
           <button onclick="setStatusFilter('ALL')" id="filter-all" class="py-1.5 rounded-md bg-blue-600 text-white font-semibold shadow transition">ทั้งหมด</button>
           <button onclick="setStatusFilter('Online')" id="filter-online" class="py-1.5 rounded-md text-slate-300 hover:text-white transition">Online</button>
           <button onclick="setStatusFilter('Offline')" id="filter-offline" class="py-1.5 rounded-md text-slate-300 hover:text-white transition">Offline</button>
+          <button onclick="setStatusFilter('On/Off')" id="filter-onoff" class="py-1.5 rounded-md text-slate-300 hover:text-white transition">On/Off</button>
         </div>
 
         <!-- ตัวกรองประเภทกล้อง -->
-        <select id="type-filter" onchange="applyFilters()" class="w-full bg-slate-800 border border-slate-700 text-slate-300 text-xs rounded-lg px-2 py-1.5 focus:outline-none">
+        <select id="type-filter" onchange="applyFilters()" class="w-full bg-slate-800 border border-slate-700 text-slate-300 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none">
           <option value="ALL">ทุกประเภท (4G, Wifi, ยุทธวิธี)</option>
           <option value="4G">เฉพาะกล้อง 4G</option>
           <option value="Wifi">เฉพาะกล้อง Wifi</option>
@@ -164,7 +177,7 @@
     </aside>
 
     <!-- Map Container -->
-    <main class="flex-1 relative h-full">
+    <main class="flex-1 relative h-full w-full">
       <div id="map" class="w-full h-full"></div>
     </main>
   </div>
@@ -173,7 +186,7 @@
   <div id="view-dashboard" class="hidden flex-1 overflow-y-auto p-3 md:p-6 bg-slate-950">
     <div class="max-w-7xl mx-auto space-y-4 md:space-y-6">
       
-      <!-- KPI Cards -->
+      <!-- KPI Cards (4 ช่อง) -->
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 md:gap-4">
         <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 md:p-4">
           <p class="text-[11px] md:text-xs font-medium text-slate-400">ทั้งหมด</p>
@@ -191,9 +204,9 @@
           <span class="text-[10px] text-rose-500/80 font-medium hidden sm:inline">สัญญาณขาด</span>
         </div>
         <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 md:p-4">
-          <p class="text-[11px] md:text-xs font-medium text-slate-400">ความพร้อม</p>
-          <h3 id="dash-rate" class="text-xl md:text-2xl font-bold text-amber-400 mt-0.5">0%</h3>
-          <span class="text-[10px] text-slate-500 hidden sm:inline">Uptime รวม</span>
+          <p class="text-[11px] md:text-xs font-medium text-slate-400">On/Off (ติดๆ ดับๆ)</p>
+          <h3 id="dash-onoff" class="text-xl md:text-2xl font-bold text-amber-400 mt-0.5">0</h3>
+          <span class="text-[10px] text-amber-500/80 font-medium hidden sm:inline">สัญญาณไม่เสถียร</span>
         </div>
       </div>
 
@@ -205,7 +218,7 @@
         <div id="dash-type-stats" class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4"></div>
       </div>
 
-      <!-- สรุปตามป้อม & กล้อง Offline -->
+      <!-- สรุปตามป้อม & กล้องที่มีปัญหา -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 md:p-5">
           <h2 class="text-xs md:text-sm font-semibold text-white flex items-center gap-2 mb-3">
@@ -219,7 +232,8 @@
                   <th class="py-2 text-center">รวม</th>
                   <th class="py-2 text-center text-emerald-400">On</th>
                   <th class="py-2 text-center text-rose-400">Off</th>
-                  <th class="py-2 text-right">ความพร้อม</th>
+                  <th class="py-2 text-center text-amber-400">On/Off</th>
+                  <th class="py-2 text-right">%</th>
                 </tr>
               </thead>
               <tbody id="dash-station-table" class="divide-y divide-slate-800/60"></tbody>
@@ -228,8 +242,8 @@
         </div>
 
         <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 md:p-5 flex flex-col">
-          <h2 class="text-xs md:text-sm font-semibold text-rose-400 flex items-center gap-2 mb-3">
-            <i data-lucide="alert-circle" class="w-4 h-4 text-rose-400"></i> กล้องที่ Offline (ต้องตรวจสอบ)
+          <h2 class="text-xs md:text-sm font-semibold text-amber-400 flex items-center gap-2 mb-3">
+            <i data-lucide="alert-circle" class="w-4 h-4 text-amber-400"></i> กล้องที่ Offline หรือ On/Off (ต้องตรวจสอบ)
           </h2>
           <div class="flex-1 overflow-y-auto max-h-72 md:max-h-80 pr-1 space-y-2" id="dash-offline-list"></div>
         </div>
@@ -250,16 +264,20 @@
     let isMobileSidebarOpen = false;
 
     // เปิด/ปิด Sidebar บนจอมือถือ
-    function toggleMobileSidebar() {
+    function openMobileSidebar() {
       const sidebar = document.getElementById("sidebar-container");
-      isMobileSidebarOpen = !isMobileSidebarOpen;
-      if (isMobileSidebarOpen) {
-        sidebar.classList.remove("hidden");
-        sidebar.classList.add("flex");
-      } else {
-        sidebar.classList.add("hidden");
-        sidebar.classList.remove("flex");
-      }
+      const backdrop = document.getElementById("sidebar-backdrop");
+      sidebar.classList.remove("-translate-x-full");
+      backdrop.classList.remove("hidden");
+      isMobileSidebarOpen = true;
+    }
+
+    function closeMobileSidebar() {
+      const sidebar = document.getElementById("sidebar-container");
+      const backdrop = document.getElementById("sidebar-backdrop");
+      sidebar.classList.add("-translate-x-full");
+      backdrop.classList.add("hidden");
+      isMobileSidebarOpen = false;
     }
 
     // สลับหน้า Map / Dashboard
@@ -305,7 +323,6 @@
 
       googleStreets.addTo(map);
 
-      // โหลดขอบเขตตำบล อ.สุคิริน (ถ้ามีไฟล์ใน repo)
       const boundaryLayer = L.geoJSON(null, {
         style: {
           color: '#2563eb',
@@ -349,11 +366,13 @@
       L.control.zoom({ position: "bottomright" }).addTo(map);
       markersLayer.addTo(map);
     }
-
+    
     // สร้างไอคอนหมุด (Online เขียว / Offline แดง)
     function createCustomMarker(status) {
-      const isOnline = (status || "").toLowerCase() === "online";
-      const colorClass = isOnline ? "marker-online" : "marker-offline";
+      const s = (status || "").toLowerCase().trim();
+      let colorClass = "marker-offline";
+      if (s === "online") colorClass = "marker-online";
+      else if (s === "on/off" || s === "on-off") colorClass = "marker-onoff";
 
       return L.divIcon({
         className: "custom-pin",
@@ -370,15 +389,21 @@
       listContainer.innerHTML = "";
 
       const total = rawData.length;
-      const online = rawData.filter(c => (c.status || "").toLowerCase() === "online").length;
-      const offline = total - online;
+      const online = rawData.filter(c => (c.status || "").toLowerCase().trim() === "online").length;
+      const onoff = rawData.filter(c => {
+        const s = (c.status || "").toLowerCase().trim();
+        return s === "on/off" || s === "on-off";
+      }).length;
+      const offline = total - online - onoff;
 
       const statTotalEl = document.getElementById("stat-total");
       const statOnlineEl = document.getElementById("stat-online");
       const statOfflineEl = document.getElementById("stat-offline");
+      const statOnoffEl = document.getElementById("stat-onoff");
       if (statTotalEl) statTotalEl.innerText = total;
       if (statOnlineEl) statOnlineEl.innerText = online;
       if (statOfflineEl) statOfflineEl.innerText = offline;
+      if (statOnoffEl) statOnoffEl.innerText = onoff;
 
       const badgeCount = document.getElementById("mobile-badge-count");
       if (badgeCount) badgeCount.innerText = items.length;
@@ -389,7 +414,13 @@
       }
 
       items.forEach(cam => {
-        const isOnline = (cam.status || '').toLowerCase() === 'online';
+        const s = (cam.status || "").toLowerCase().trim();
+        const isOnline = s === 'online';
+        const isOnOff = s === 'on/off' || s === 'on-off';
+
+        let badgeStyle = "bg-rose-500/20 text-rose-300 border-rose-500/30";
+        if (isOnline) badgeStyle = "bg-emerald-500/20 text-emerald-300 border-emerald-500/30";
+        else if (isOnOff) badgeStyle = "bg-amber-500/20 text-amber-300 border-amber-500/30";
         
         // วาดหมุดบนแผนที่
         if (cam.lat && cam.lng && !isNaN(cam.lat) && !isNaN(cam.lng)) {
@@ -397,7 +428,7 @@
           marker.bindPopup(`
             <div class="p-1 space-y-1 text-xs">
               <div class="font-bold text-white text-sm border-b border-slate-700 pb-1">${cam.name}</div>
-              <div><b>สถานะ:</b> <span class="${isOnline ? 'text-emerald-400' : 'text-rose-400'} font-semibold">${isOnline ? 'Online' : 'Offline'}</span></div>
+              <div><b>สถานะ:</b> <span class="${isOnline ? 'text-emerald-400' : (isOnOff ? 'text-amber-400' : 'text-rose-400')} font-semibold">${cam.status}</span></div>
               <div><b>ประเภท:</b> ${cam.type}</div>
               <div><b>UID:</b> <span class="font-mono text-blue-300 text-[11px]">${cam.uid}</span></div>
               <div><b>ป้อม:</b> ${cam.station}</div>
@@ -413,9 +444,7 @@
         card.innerHTML = `
           <div class="flex items-start justify-between gap-1">
             <span class="font-semibold text-xs text-slate-100">${cam.name}</span>
-            <span class="text-[10px] px-1.5 py-0.5 rounded font-semibold ${
-              isOnline ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
-            }">${isOnline ? 'Online' : 'Offline'}</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded font-semibold border ${badgeStyle}">${cam.status}</span>
           </div>
           <div class="text-[11px] text-slate-400 font-mono mt-0.5">${cam.uid}</div>
           <div class="flex justify-between text-[10px] text-slate-400 mt-2 pt-1.5 border-t border-slate-700/40">
@@ -426,8 +455,8 @@
 
         card.addEventListener("click", () => {
           // บนมือถือ เมื่อคลิกกล้องให้ปิด Sidebar แล้วซูมไปที่หมุด
-          if (window.innerWidth < 768 && isMobileSidebarOpen) {
-            toggleMobileSidebar();
+          if (window.innerWidth < 768) {
+            closeMobileSidebar();
           }
           if (cam.lat && cam.lng && !isNaN(cam.lat)) {
             map.flyTo([cam.lat, cam.lng], 16, { duration: 1 });
@@ -442,23 +471,33 @@
 
     function renderDashboard() {
       const total = rawData.length;
-      const online = rawData.filter(c => (c.status || "").toLowerCase() === "online").length;
-      const offline = total - online;
-      const uptimeRate = total > 0 ? ((online / total) * 100).toFixed(1) : 0;
+      const online = rawData.filter(c => (c.status || "").toLowerCase().trim() === "online").length;
+      const onoff = rawData.filter(c => {
+        const s = (c.status || "").toLowerCase().trim();
+        return s === "on/off" || s === "on-off";
+      }).length;
+      const offline = total - online - onoff;
 
       document.getElementById("dash-total").innerText = total;
       document.getElementById("dash-online").innerText = online;
       document.getElementById("dash-offline").innerText = offline;
-      document.getElementById("dash-rate").innerText = `${uptimeRate}%`;
+      document.getElementById("dash-onoff").innerText = onoff;
 
       const typeContainer = document.getElementById("dash-type-stats");
       const types = ["4G", "Wifi", "ยุทธวิธี"];
       typeContainer.innerHTML = types.map(t => {
         const typeCams = rawData.filter(c => c.type === t);
         const tTotal = typeCams.length;
-        const tOnline = typeCams.filter(c => (c.status || "").toLowerCase() === "online").length;
-        const tOffline = tTotal - tOnline;
-        const tPercent = tTotal > 0 ? Math.round((tOnline / tTotal) * 100) : 0;
+        const tOnline = typeCams.filter(c => (c.status || "").toLowerCase().trim() === "online").length;
+        const tOnOff = typeCams.filter(c => {
+          const s = (c.status || "").toLowerCase().trim();
+          return s === "on/off" || s === "on-off";
+        }).length;
+        const tOffline = tTotal - tOnline - tOnOff;
+
+        const pOnline = tTotal > 0 ? Math.round((tOnline / tTotal) * 100) : 0;
+        const pOnOff = tTotal > 0 ? Math.round((tOnOff / tTotal) * 100) : 0;
+        const pOffline = tTotal > 0 ? Math.max(0, 100 - pOnline - pOnOff) : 0;
 
         return `
           <div class="bg-slate-800/60 border border-slate-700/50 rounded-lg p-3 space-y-2">
@@ -467,13 +506,15 @@
               <span class="text-xs text-slate-400 font-mono">${tOnline}/${tTotal} ตัว</span>
             </div>
             <div class="w-full bg-slate-700 h-2 rounded-full overflow-hidden flex">
-              <div class="bg-emerald-500 h-full" style="width: ${tPercent}%"></div>
-              <div class="bg-rose-500 h-full" style="width: ${100 - tPercent}%"></div>
+              <div class="bg-emerald-500 h-full" style="width: ${pOnline}%"></div>
+              <div class="bg-amber-500 h-full" style="width: ${pOnOff}%"></div>
+              <div class="bg-rose-500 h-full" style="width: ${pOffline}%"></div>
             </div>
             <div class="flex justify-between text-[11px] text-slate-400">
               <span class="text-emerald-400">On: ${tOnline}</span>
+              <span class="text-amber-400">On/Off: ${tOnOff}</span>
               <span class="text-rose-400">Off: ${tOffline}</span>
-              <span class="text-slate-300 font-semibold">${tPercent}%</span>
+              <span class="text-slate-300 font-semibold">${pOnline}%</span>
             </div>
           </div>
         `;
@@ -482,9 +523,11 @@
       const stationMap = {};
       rawData.forEach(c => {
         const st = c.station || "ไม่ระบุ";
-        if (!stationMap[st]) stationMap[st] = { total: 0, online: 0, offline: 0 };
+        if (!stationMap[st]) stationMap[st] = { total: 0, online: 0, offline: 0, onoff: 0 };
         stationMap[st].total += 1;
-        if ((c.status || "").toLowerCase() === "online") stationMap[st].online += 1;
+        const s = (c.status || "").toLowerCase().trim();
+        if (s === "online") stationMap[st].online += 1;
+        else if (s === "on/off" || s === "on-off") stationMap[st].onoff += 1;
         else stationMap[st].offline += 1;
       });
 
@@ -499,32 +542,36 @@
               <td class="py-2.5 text-center font-mono text-slate-300">${data.total}</td>
               <td class="py-2.5 text-center font-mono text-emerald-400">${data.online}</td>
               <td class="py-2.5 text-center font-mono text-rose-400">${data.offline}</td>
+              <td class="py-2.5 text-center font-mono text-amber-400">${data.onoff}</td>
               <td class="py-2.5 text-right font-medium ${rate >= 70 ? 'text-emerald-400' : 'text-amber-400'}">${rate}%</td>
             </tr>
           `;
         }).join("");
 
       const offlineList = document.getElementById("dash-offline-list");
-      const offlineCams = rawData.filter(c => (c.status || "").toLowerCase() !== "online");
-      if (offlineCams.length === 0) {
+      const troubledCams = rawData.filter(c => (c.status || "").toLowerCase().trim() !== "online");
+      if (troubledCams.length === 0) {
         offlineList.innerHTML = `<div class="text-center py-6 text-emerald-400 text-xs">กล้องทุกจุดออนไลน์สมบูรณ์ 100%</div>`;
       } else {
-        offlineList.innerHTML = offlineCams.map(c => `
-          <div class="bg-rose-950/30 border border-rose-800/40 rounded-lg p-2 flex items-center justify-between text-xs">
-            <div>
-              <div class="font-semibold text-rose-200 text-xs">${c.name}</div>
-              <div class="text-[10px] text-slate-400 font-mono mt-0.5">${c.uid} • ${c.station}</div>
+        offlineList.innerHTML = troubledCams.map(c => {
+          const isOff = (c.status || "").toLowerCase().includes("off") && !c.status.includes("/");
+          return `
+            <div class="${isOff ? 'bg-rose-950/30 border-rose-800/40' : 'bg-amber-950/30 border-amber-800/40'} border rounded-lg p-2 flex items-center justify-between text-xs">
+              <div>
+                <div class="font-semibold ${isOff ? 'text-rose-200' : 'text-amber-200'} text-xs">${c.name} <span class="text-[10px] px-1 py-0.2 rounded border ml-1">${c.status}</span></div>
+                <div class="text-[10px] text-slate-400 font-mono mt-0.5">${c.uid} • ${c.station}</div>
+              </div>
+              <button onclick="goToCamOnMap(${c.id})" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded border border-slate-700 text-[11px] shrink-0">
+                ดูบนแผนที่
+              </button>
             </div>
-            <button onclick="goToCamOnMap(${c.id})" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded border border-slate-700 text-[11px] shrink-0">
-              ดูบนแผนที่
-            </button>
-          </div>
-        `).join("");
+          `;
+        }).join("");
       }
 
       lucide.createIcons();
     }
-
+    
     function goToCamOnMap(camId) {
       const cam = rawData.find(c => c.id === camId);
       if (cam) {
@@ -538,12 +585,19 @@
       }
     }
     
-    // ตัวกรองสถานะ (ทั้งหมด, Online, Offline)
+    // ตัวกรองสถานะ 4 ตัวเลือก (ทั้งหมด / Online / Offline / On/Off)
     function setStatusFilter(status) {
       selectedStatusFilter = status;
-      ['all', 'online', 'offline'].forEach(key => {
-        const btn = document.getElementById(`filter-${key}`);
-        if (key.toLowerCase() === status.toLowerCase() || (key === 'all' && status === 'ALL')) {
+      const btnMap = {
+        'ALL': document.getElementById('filter-all'),
+        'Online': document.getElementById('filter-online'),
+        'Offline': document.getElementById('filter-offline'),
+        'On/Off': document.getElementById('filter-onoff')
+      };
+
+      Object.entries(btnMap).forEach(([k, btn]) => {
+        if (!btn) return;
+        if (k === status) {
           btn.className = "py-1.5 rounded-md bg-blue-600 text-white font-semibold shadow transition";
         } else {
           btn.className = "py-1.5 rounded-md text-slate-300 hover:text-white transition";
@@ -558,10 +612,16 @@
       const t = document.getElementById("type-filter").value;
 
       const filtered = rawData.filter(cam => {
-        const isOnline = (cam.status || "").toLowerCase() === "online";
-        const matchStatus = (selectedStatusFilter === "ALL") || 
-          (selectedStatusFilter === "Online" && isOnline) ||
-          (selectedStatusFilter === "Offline" && !isOnline);
+        const s = (cam.status || "").toLowerCase().trim();
+        const isOnline = s === "online";
+        const isOnOff = s === "on/off" || s === "on-off";
+        const isOffline = !isOnline && !isOnOff;
+
+        let matchStatus = false;
+        if (selectedStatusFilter === "ALL") matchStatus = true;
+        else if (selectedStatusFilter === "Online") matchStatus = isOnline;
+        else if (selectedStatusFilter === "Offline") matchStatus = isOffline;
+        else if (selectedStatusFilter === "On/Off") matchStatus = isOnOff;
 
         const matchType = (t === "ALL") || (cam.type === t);
         const matchSearch = (cam.name || "").toLowerCase().includes(q) || 
