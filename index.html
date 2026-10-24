@@ -273,7 +273,7 @@ function openCamHipro(uid) {
   if (uid && uid !== '-') {
     navigator.clipboard.writeText(uid).then(() => {
       // แจ้งเตือนสั้นๆ ให้ผู้ใช้ทราบ
-      alert(`คัดลอก UID: ${uid} เรียบร้อยแล้ว!\nกำลังเปิดแอป CamHipro...`);
+      alert(`คัดลอก UID: ${uid} เรียบร้อยแล้ว!`);
     }).catch(() => {});
   }
 
