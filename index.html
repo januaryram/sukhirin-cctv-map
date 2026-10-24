@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>ระบบติดตามกล้องวงจรปิด สภ.สุคิริน</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -33,9 +33,6 @@
       background-color: #ef4444;
       animation: pulse-red 1.5s infinite;
     }
-    .marker-onoff {
-      background-color: #f59e0b;
-    }
     .leaflet-popup-content-wrapper {
       background: #0f172a !important;
       color: #f8fafc !important;
@@ -45,50 +42,94 @@
     .leaflet-popup-tip {
       background: #0f172a !important;
     }
+    
+    /* ซ่อน Scrollbar แนวนอนในมือถือ */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 flex flex-col h-screen overflow-hidden font-sans">
 
-  <!-- Header -->
-  <header class="bg-slate-900 border-b border-slate-800 px-5 py-3 flex items-center justify-between shrink-0 z-20 shadow-md">
-    <div class="flex items-center gap-3">
-      <div class="p-2 bg-blue-600/20 text-blue-400 rounded-lg border border-blue-500/30">
-        <i data-lucide="cctv" class="w-6 h-6"></i>
+  <!-- Header รองรับจอมือถือ -->
+  <header class="bg-slate-900 border-b border-slate-800 px-3 md:px-6 py-2 flex items-center justify-between shrink-0 z-30 shadow-md">
+    <div class="flex items-center gap-2">
+      <div class="p-1.5 md:p-2 bg-blue-600/20 text-blue-400 rounded-lg border border-blue-500/30">
+        <i data-lucide="cctv" class="w-5 h-5 md:w-6 md:h-6"></i>
       </div>
       <div>
-        <h1 class="font-bold text-base md:text-lg text-white leading-tight">ระบบติดตามกล้องวงจรปิด สภ.สุคิริน</h1>
-        <p class="text-xs text-slate-400">ฐานข้อมูล ผบช.9 (ซิงค์ตรงจาก Google Sheet)</p>
+        <h1 class="font-bold text-sm md:text-lg text-white leading-tight">สภ.สุคิริน CCTV</h1>
+        <p class="text-[10px] md:text-xs text-slate-400 truncate max-w-[130px] md:max-w-none">ฐานข้อมูล ผบช.9 (Live Sync)</p>
       </div>
     </div>
 
-    <!-- สรุปสถิติ & ปุ่ม Refresh -->
-    <div class="flex items-center gap-2 text-xs font-medium">
-      <div class="hidden sm:flex bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-lg items-center gap-2">
-        <span class="text-slate-400">ทั้งหมด:</span>
-        <span id="stat-total" class="font-bold text-white">0</span>
+    <!-- ปุ่มสลับมุมมอง & ปุ่ม Refresh -->
+    <div class="flex items-center gap-1.5 md:gap-2.5">
+      <div class="bg-slate-800/90 p-0.5 md:p-1 rounded-lg border border-slate-700/60 flex items-center gap-1 text-xs">
+        <button id="nav-map" onclick="switchView('map')" class="flex items-center gap-1 px-2.5 py-1.5 md:px-3 md:py-1.5 rounded-md bg-blue-600 text-white font-medium shadow text-[11px] md:text-xs">
+          <i data-lucide="map" class="w-3.5 h-3.5"></i>
+          <span>แผนที่</span>
+        </button>
+        <button id="nav-dash" onclick="switchView('dashboard')" class="flex items-center gap-1 px-2.5 py-1.5 md:px-3 md:py-1.5 rounded-md text-slate-300 hover:text-white text-[11px] md:text-xs">
+          <i data-lucide="layout-dashboard" class="w-3.5 h-3.5"></i>
+          <span>สรุป</span>
+        </button>
       </div>
-      <div class="bg-emerald-950/60 border border-emerald-700/50 text-emerald-300 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5">
-        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-        <span class="hidden sm:inline">Online:</span>
-        <span id="stat-online" class="font-bold">0</span>
+
+      <!-- สถิติย่อบน Header (แสดงเฉพาะจอใหญ่) -->
+      <div class="hidden lg:flex items-center gap-2 text-xs font-medium border-l border-slate-800 pl-2.5">
+        <div class="bg-slate-800 border border-slate-700 px-2 py-1 rounded-lg flex items-center gap-1.5">
+          <span class="text-slate-400">ทั้งหมด:</span>
+          <span id="stat-total" class="font-bold text-white">0</span>
+        </div>
+        <div class="bg-emerald-950/60 border border-emerald-700/50 text-emerald-300 px-2 py-1 rounded-lg flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+          <span>Online:</span>
+          <span id="stat-online" class="font-bold">0</span>
+        </div>
+        <div class="bg-rose-950/60 border border-rose-700/50 text-rose-300 px-2 py-1 rounded-lg flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+          <span>Offline:</span>
+          <span id="stat-offline" class="font-bold">0</span>
+        </div>
       </div>
-      <div class="bg-rose-950/60 border border-rose-700/50 text-rose-300 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5">
-        <span class="w-2 h-2 rounded-full bg-rose-500"></span>
-        <span class="hidden sm:inline">Offline:</span>
-        <span id="stat-offline" class="font-bold">0</span>
-      </div>
-      <button onclick="fetchSheetData()" title="รีเฟรชข้อมูล" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700 transition">
+
+      <button onclick="fetchSheetData()" title="รีเฟรชข้อมูล" class="p-1.5 md:p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700">
         <i data-lucide="refresh-cw" class="w-4 h-4" id="refresh-icon"></i>
       </button>
     </div>
   </header>
 
-  <!-- Content Layout -->
-  <div class="flex flex-1 overflow-hidden relative">
+  <!-- หน้าที่ 1: Map View -->
+  <div id="view-map" class="flex flex-col md:flex-row flex-1 overflow-hidden relative">
     
-    <!-- Sidebar -->
-    <aside class="w-80 md:w-96 bg-slate-900/95 backdrop-blur border-r border-slate-800 flex flex-col shrink-0 z-10">
+    <!-- ปุ่ม Toggle เปิด/ปิด รายการกล้องบนมือถือ -->
+    <div class="md:hidden absolute top-3 left-3 z-[1000]">
+      <button onclick="toggleMobileSidebar()" id="btn-mobile-sidebar" class="bg-slate-900/90 backdrop-blur text-white px-3 py-2 rounded-lg border border-slate-700 shadow-lg flex items-center gap-2 text-xs font-medium">
+        <i data-lucide="list" class="w-4 h-4"></i>
+        <span>รายการกล้อง</span>
+        <span id="mobile-badge-count" class="bg-blue-600 px-1.5 py-0.2 rounded-full text-[10px]">0</span>
+      </button>
+    </div>
+
+    <!-- Sidebar บนคอมฯ จะอยู่ซ้ายมือ / บนมือถือจะเป็น Drawer เลื่อนขึ้นมาทับแผนที่ -->
+    <aside id="sidebar-container" class="hidden md:flex flex-col w-full md:w-96 bg-slate-900 md:bg-slate-900/95 backdrop-blur border-r border-slate-800 shrink-0 z-20 absolute md:static inset-0 md:inset-auto h-full">
       <div class="p-3 border-b border-slate-800 space-y-2.5">
+        
+        <!-- แถบปิด Sidebar บนมือถือ -->
+        <div class="flex md:hidden items-center justify-between pb-1 border-b border-slate-800">
+          <span class="font-bold text-sm text-white flex items-center gap-1.5">
+            <i data-lucide="list-filter" class="w-4 h-4 text-blue-400"></i> ตัวกรอง & รายการกล้อง
+          </span>
+          <button onclick="toggleMobileSidebar()" class="p-1 text-slate-400 hover:text-white">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+
         <!-- ค้นหา -->
         <div class="relative">
           <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-slate-400"></i>
@@ -128,15 +169,124 @@
     </main>
   </div>
 
+  <!-- หน้าที่ 2: Dashboard View -->
+  <div id="view-dashboard" class="hidden flex-1 overflow-y-auto p-3 md:p-6 bg-slate-950">
+    <div class="max-w-7xl mx-auto space-y-4 md:space-y-6">
+      
+      <!-- KPI Cards -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 md:gap-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 md:p-4">
+          <p class="text-[11px] md:text-xs font-medium text-slate-400">ทั้งหมด</p>
+          <h3 id="dash-total" class="text-xl md:text-2xl font-bold text-white mt-0.5">0</h3>
+          <span class="text-[10px] text-slate-500 hidden sm:inline">กล้องในระบบ</span>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 md:p-4">
+          <p class="text-[11px] md:text-xs font-medium text-slate-400">Online</p>
+          <h3 id="dash-online" class="text-xl md:text-2xl font-bold text-emerald-400 mt-0.5">0</h3>
+          <span class="text-[10px] text-emerald-500/80 font-medium hidden sm:inline">ใช้งานปกติ</span>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 md:p-4">
+          <p class="text-[11px] md:text-xs font-medium text-slate-400">Offline</p>
+          <h3 id="dash-offline" class="text-xl md:text-2xl font-bold text-rose-400 mt-0.5">0</h3>
+          <span class="text-[10px] text-rose-500/80 font-medium hidden sm:inline">สัญญาณขาด</span>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 md:p-4">
+          <p class="text-[11px] md:text-xs font-medium text-slate-400">ความพร้อม</p>
+          <h3 id="dash-rate" class="text-xl md:text-2xl font-bold text-amber-400 mt-0.5">0%</h3>
+          <span class="text-[10px] text-slate-500 hidden sm:inline">Uptime รวม</span>
+        </div>
+      </div>
+
+      <!-- สรุปแยกตามประเภท -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 md:p-5">
+        <h2 class="text-xs md:text-sm font-semibold text-white flex items-center gap-2 mb-3">
+          <i data-lucide="layers" class="w-4 h-4 text-blue-400"></i> จำแนกตามประเภทกล้อง
+        </h2>
+        <div id="dash-type-stats" class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4"></div>
+      </div>
+
+      <!-- สรุปตามป้อม & กล้อง Offline -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 md:p-5">
+          <h2 class="text-xs md:text-sm font-semibold text-white flex items-center gap-2 mb-3">
+            <i data-lucide="shield" class="w-4 h-4 text-blue-400"></i> สถิติตามป้อมรับผิดชอบ
+          </h2>
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs text-left">
+              <thead class="text-slate-400 border-b border-slate-800 pb-2">
+                <tr>
+                  <th class="py-2">ป้อม</th>
+                  <th class="py-2 text-center">รวม</th>
+                  <th class="py-2 text-center text-emerald-400">On</th>
+                  <th class="py-2 text-center text-rose-400">Off</th>
+                  <th class="py-2 text-right">%</th>
+                </tr>
+              </thead>
+              <tbody id="dash-station-table" class="divide-y divide-slate-800/60"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 md:p-5 flex flex-col">
+          <h2 class="text-xs md:text-sm font-semibold text-rose-400 flex items-center gap-2 mb-3">
+            <i data-lucide="alert-circle" class="w-4 h-4 text-rose-400"></i> กล้องที่ Offline (ต้องตรวจสอบ)
+          </h2>
+          <div class="flex-1 overflow-y-auto max-h-72 md:max-h-80 pr-1 space-y-2" id="dash-offline-list"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  
   <script>
     // URL CSV ที่เชื่อมตรงกับชีต "ตารางรวม" (gid=649862841)
     const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSMp9mKQv4IFkOiJWWhXPqyEQAEl5rCYym5-qN_-nz4vjoxyzoZhOxW9iqRP5GKxxMWCh12xlFiJgiH/pub?gid=649862841&single=true&output=csv";
 
     let rawData = [];
     let selectedStatusFilter = "ALL";
+    let currentView = "map";
     let map;
     let markersLayer = L.layerGroup();
+    let isMobileSidebarOpen = false;
 
+    // เปิด/ปิด Sidebar บนจอมือถือ
+    function toggleMobileSidebar() {
+      const sidebar = document.getElementById("sidebar-container");
+      isMobileSidebarOpen = !isMobileSidebarOpen;
+      if (isMobileSidebarOpen) {
+        sidebar.classList.remove("hidden");
+        sidebar.classList.add("flex");
+      } else {
+        sidebar.classList.add("hidden");
+        sidebar.classList.remove("flex");
+      }
+    }
+
+    // สลับหน้า Map / Dashboard
+    function switchView(view) {
+      currentView = view;
+      const mapContainer = document.getElementById("view-map");
+      const dashContainer = document.getElementById("view-dashboard");
+      const btnMap = document.getElementById("nav-map");
+      const btnDash = document.getElementById("nav-dash");
+
+      if (view === 'map') {
+        mapContainer.classList.remove("hidden");
+        mapContainer.classList.add("flex");
+        dashContainer.classList.add("hidden");
+        btnMap.className = "flex items-center gap-1 px-2.5 py-1.5 md:px-3 md:py-1.5 rounded-md bg-blue-600 text-white font-medium shadow text-[11px] md:text-xs";
+        btnDash.className = "flex items-center gap-1 px-2.5 py-1.5 md:px-3 md:py-1.5 rounded-md text-slate-300 hover:text-white text-[11px] md:text-xs";
+        setTimeout(() => map.invalidateSize(), 200);
+      } else {
+        mapContainer.classList.add("hidden");
+        mapContainer.classList.remove("flex");
+        dashContainer.classList.remove("hidden");
+        btnDash.className = "flex items-center gap-1 px-2.5 py-1.5 md:px-3 md:py-1.5 rounded-md bg-blue-600 text-white font-medium shadow text-[11px] md:text-xs";
+        btnMap.className = "flex items-center gap-1 px-2.5 py-1.5 md:px-3 md:py-1.5 rounded-md text-slate-300 hover:text-white text-[11px] md:text-xs";
+        renderDashboard();
+      }
+    }
+    
     // เริ่มต้นแผนที่ด้วย Google Maps + GeoJSON อ.สุคิริน
     function initMap() {
       map = L.map("map", { zoomControl: false }).setView([5.9385, 101.7755], 13);
@@ -181,7 +331,7 @@
           if (data) {
             boundaryLayer.addData(data);
             if (boundaryLayer.getBounds().isValid()) {
-              map.fitBounds(boundaryLayer.getBounds(), { padding: [20, 20] });
+              map.fitBounds(boundaryLayer.getBounds(), { padding: [15, 15] });
             }
           }
         })
@@ -223,9 +373,15 @@
       const online = rawData.filter(c => (c.status || "").toLowerCase() === "online").length;
       const offline = total - online;
 
-      document.getElementById("stat-total").innerText = total;
-      document.getElementById("stat-online").innerText = online;
-      document.getElementById("stat-offline").innerText = offline;
+      const statTotalEl = document.getElementById("stat-total");
+      const statOnlineEl = document.getElementById("stat-online");
+      const statOfflineEl = document.getElementById("stat-offline");
+      if (statTotalEl) statTotalEl.innerText = total;
+      if (statOnlineEl) statOnlineEl.innerText = online;
+      if (statOfflineEl) statOfflineEl.innerText = offline;
+
+      const badgeCount = document.getElementById("mobile-badge-count");
+      if (badgeCount) badgeCount.innerText = items.length;
 
       if (items.length === 0) {
         listContainer.innerHTML = `<div class="text-center py-10 text-slate-500 text-xs">ไม่พบรายการกล้องที่ค้นหา</div>`;
@@ -241,10 +397,10 @@
           marker.bindPopup(`
             <div class="p-1 space-y-1 text-xs">
               <div class="font-bold text-white text-sm border-b border-slate-700 pb-1">${cam.name}</div>
-              <div><b>สถานะ:</b> <span class="${(cam.status || '').toLowerCase() === 'online' ? 'text-emerald-400':'text-rose-400'} font-semibold">${cam.status}</span></div>
+              <div><b>สถานะ:</b> <span class="${isOnline ? 'text-emerald-400' : 'text-rose-400'} font-semibold">${isOnline ? 'Online' : 'Offline'}</span></div>
               <div><b>ประเภท:</b> ${cam.type}</div>
               <div><b>UID:</b> <span class="font-mono text-blue-300 text-[11px]">${cam.uid}</span></div>
-              <div><b>ป้อมรับผิดชอบ:</b> ${cam.station}</div>
+              <div><b>ป้อม:</b> ${cam.station}</div>
             </div>
           `);
           markersLayer.addLayer(marker);
@@ -253,7 +409,7 @@
 
         // การ์ดรายการในแถบด้านข้าง
         const card = document.createElement("div");
-        card.className = "p-2.5 rounded-lg bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 hover:border-slate-600 transition cursor-pointer";
+        card.className = "p-2.5 rounded-lg bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 transition cursor-pointer";
         card.innerHTML = `
           <div class="flex items-start justify-between gap-1">
             <span class="font-semibold text-xs text-slate-100">${cam.name}</span>
@@ -269,6 +425,10 @@
         `;
 
         card.addEventListener("click", () => {
+          // บนมือถือ เมื่อคลิกกล้องให้ปิด Sidebar แล้วซูมไปที่หมุด
+          if (window.innerWidth < 768 && isMobileSidebarOpen) {
+            toggleMobileSidebar();
+          }
           if (cam.lat && cam.lng && !isNaN(cam.lat)) {
             map.flyTo([cam.lat, cam.lng], 16, { duration: 1 });
             if (cam._marker) setTimeout(() => cam._marker.openPopup(), 1000);
@@ -278,6 +438,104 @@
         listContainer.appendChild(card);
       });
       lucide.createIcons();
+    }
+
+    function renderDashboard() {
+      const total = rawData.length;
+      const online = rawData.filter(c => (c.status || "").toLowerCase() === "online").length;
+      const offline = total - online;
+      const uptimeRate = total > 0 ? ((online / total) * 100).toFixed(1) : 0;
+
+      document.getElementById("dash-total").innerText = total;
+      document.getElementById("dash-online").innerText = online;
+      document.getElementById("dash-offline").innerText = offline;
+      document.getElementById("dash-rate").innerText = `${uptimeRate}%`;
+
+      const typeContainer = document.getElementById("dash-type-stats");
+      const types = ["4G", "Wifi", "ยุทธวิธี"];
+      typeContainer.innerHTML = types.map(t => {
+        const typeCams = rawData.filter(c => c.type === t);
+        const tTotal = typeCams.length;
+        const tOnline = typeCams.filter(c => (c.status || "").toLowerCase() === "online").length;
+        const tOffline = tTotal - tOnline;
+        const tPercent = tTotal > 0 ? Math.round((tOnline / tTotal) * 100) : 0;
+
+        return `
+          <div class="bg-slate-800/60 border border-slate-700/50 rounded-lg p-3 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="font-semibold text-xs text-white">กล้อง ${t}</span>
+              <span class="text-xs text-slate-400 font-mono">${tOnline}/${tTotal} ตัว</span>
+            </div>
+            <div class="w-full bg-slate-700 h-2 rounded-full overflow-hidden flex">
+              <div class="bg-emerald-500 h-full" style="width: ${tPercent}%"></div>
+              <div class="bg-rose-500 h-full" style="width: ${100 - tPercent}%"></div>
+            </div>
+            <div class="flex justify-between text-[11px] text-slate-400">
+              <span class="text-emerald-400">On: ${tOnline}</span>
+              <span class="text-rose-400">Off: ${tOffline}</span>
+              <span class="text-slate-300 font-semibold">${tPercent}%</span>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      const stationMap = {};
+      rawData.forEach(c => {
+        const st = c.station || "ไม่ระบุ";
+        if (!stationMap[st]) stationMap[st] = { total: 0, online: 0, offline: 0 };
+        stationMap[st].total += 1;
+        if ((c.status || "").toLowerCase() === "online") stationMap[st].online += 1;
+        else stationMap[st].offline += 1;
+      });
+
+      const stationTable = document.getElementById("dash-station-table");
+      stationTable.innerHTML = Object.entries(stationMap)
+        .sort((a, b) => b[1].total - a[1].total)
+        .map(([name, data]) => {
+          const rate = Math.round((data.online / data.total) * 100);
+          return `
+            <tr class="hover:bg-slate-800/40 transition">
+              <td class="py-2.5 font-medium text-slate-200">${name}</td>
+              <td class="py-2.5 text-center font-mono text-slate-300">${data.total}</td>
+              <td class="py-2.5 text-center font-mono text-emerald-400">${data.online}</td>
+              <td class="py-2.5 text-center font-mono text-rose-400">${data.offline}</td>
+              <td class="py-2.5 text-right font-medium ${rate >= 70 ? 'text-emerald-400' : 'text-amber-400'}">${rate}%</td>
+            </tr>
+          `;
+        }).join("");
+
+      const offlineList = document.getElementById("dash-offline-list");
+      const offlineCams = rawData.filter(c => (c.status || "").toLowerCase() !== "online");
+      if (offlineCams.length === 0) {
+        offlineList.innerHTML = `<div class="text-center py-6 text-emerald-400 text-xs">กล้องทุกจุดออนไลน์สมบูรณ์ 100%</div>`;
+      } else {
+        offlineList.innerHTML = offlineCams.map(c => `
+          <div class="bg-rose-950/30 border border-rose-800/40 rounded-lg p-2 flex items-center justify-between text-xs">
+            <div>
+              <div class="font-semibold text-rose-200 text-xs">${c.name}</div>
+              <div class="text-[10px] text-slate-400 font-mono mt-0.5">${c.uid} • ${c.station}</div>
+            </div>
+            <button onclick="goToCamOnMap(${c.id})" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded border border-slate-700 text-[11px] shrink-0">
+              ดูบนแผนที่
+            </button>
+          </div>
+        `).join("");
+      }
+
+      lucide.createIcons();
+    }
+
+    function goToCamOnMap(camId) {
+      const cam = rawData.find(c => c.id === camId);
+      if (cam) {
+        switchView('map');
+        if (cam.lat && cam.lng) {
+          setTimeout(() => {
+            map.flyTo([cam.lat, cam.lng], 16, { duration: 1.2 });
+            if (cam._marker) setTimeout(() => cam._marker.openPopup(), 1200);
+          }, 300);
+        }
+      }
     }
     
     // ตัวกรองสถานะ (ทั้งหมด, Online, Offline)
@@ -345,6 +603,7 @@
           }
           if (refreshIcon) refreshIcon.classList.remove("animate-spin");
           applyFilters();
+          if (currentView === 'dashboard') renderDashboard();
         },
         error: function(err) {
           console.error("เกิดข้อผิดพลาดในการดึงข้อมูล:", err);
