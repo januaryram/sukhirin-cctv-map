@@ -139,34 +139,18 @@
     let markersLayer = L.layerGroup();
 
     // เริ่มต้นแผนที่
-    // พิกัดรูปหลายเหลี่ยม (Polygon) ขอบเขตคร่าวๆ ของอำเภอสุคิริน จ.นราธิวาส
-    const sukhirinBoundaryCoords = [
-      [5.9982, 101.6954],
-      [6.0125, 101.7482],
-      [5.9863, 101.8150],
-      [5.9450, 101.8540],
-      [5.8752, 101.8725],
-      [5.8120, 101.8320],
-      [5.7650, 101.7850],
-      [5.7510, 101.7280],
-      [5.7820, 101.6850],
-      [5.8500, 101.6620],
-      [5.9250, 101.6710],
-      [5.9720, 101.6815]
-    ];
-
     function initMap() {
-      // พิกัดกึ่งกลาง อ.สุคิริน
+      // 1. ตั้งค่าแผนที่เริ่มต้น
       map = L.map("map", { zoomControl: false }).setView([5.9385, 101.7755], 13);
 
-      // 1. Google Maps แบบถนน
+      // Google Maps ถนนปกติ
       const googleStreets = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
         maxZoom: 20,
         subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
         attribution: '&copy; Google Maps'
       });
 
-      // 2. Google Maps ภาพถ่ายดาวเทียม
+      // Google Maps ภาพดาวเทียม
       const googleHybrid = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
         maxZoom: 20,
         subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
@@ -175,31 +159,67 @@
 
       googleStreets.addTo(map);
 
-      // --- สร้างเลเยอร์สีคลุมพื้นที่ อ.สุคิริน ---
-      const districtPolygon = L.polygon(sukhirinBoundaryCoords, {
-        color: '#2563eb',       // สีกรอบขอบเขต (สีน้ำเงินตำรวจ/กรมท่า)
-        weight: 2.5,            // ความหนาของเส้นขอบ
-        dashArray: '5, 5',      // เส้นประแสดงแนวเขต
-        fillColor: '#3b82f6',   // สีพื้นที่คลุม
-        fillOpacity: 0.18       // ความโปร่งแสง (18% ทำให้เห็นถนน/บ้านข้างใต้ชัดเจน)
+      // 2. โหลดไฟล์ GeoJSON ขอบเขตพื้นที่ อ.สุคิริน
+      const boundaryLayer = L.geoJSON(null, {
+        style: function (feature) {
+          return {
+            color: '#1d4ed8',       // สีเส้นขอบ (น้ำเงินเข้ม)
+            weight: 2,              // ความหนาเส้น
+            dashArray: '4, 4',       // ลายเส้นประแสดงแนวเขต
+            fillColor: '#3b82f6',    // สีคลุมพื้นที่ (ฟ้าอ่อน)
+            fillOpacity: 0.18        // ความโปร่งแสง 18% (ยังมองเห็นถนนและบ้านชัดเจน)
+          };
+        },
+        onEachFeature: function (feature, layer) {
+          // ดึงชื่อตำบลมาแสดง (รองรับทั้งชื่อจากคลัง OSM, GISTDA, กรมการปกครอง)
+          const p = feature.properties || {};
+          const subdistrictName = p.tam_th || p.name || p.NAME_TH || p.SUB_DIST_T || p.admin_name || "ตำบลใน อ.สุคิริน";
+
+          // แสดงป้ายชื่อตำบลเมื่อนำเมาส์ไปชี้หรือกด
+          layer.bindTooltip(`<b>${subdistrictName}</b>`, {
+            sticky: true,
+            direction: 'center',
+            className: 'bg-slate-900 text-white px-2 py-1 rounded text-xs border border-slate-700 shadow-md font-sans'
+          });
+
+          // เอฟเฟกต์ไฮไลต์เมื่อนำเมาส์ชี้
+          layer.on({
+            mouseover: function (e) {
+              e.target.setStyle({ fillOpacity: 0.35, weight: 2.5 });
+            },
+            mouseout: function (e) {
+              boundaryLayer.resetStyle(e.target);
+            }
+          });
+        }
       }).addTo(map);
 
-      districtPolygon.bindTooltip("<b>พื้นที่รับผิดชอบ สภ.สุคิริน</b>", {
-        sticky: true,
-        direction: 'center',
-        className: 'bg-slate-900 text-white px-2 py-1 rounded text-xs border border-slate-700'
-      });
+      // ดึงไฟล์ GeoJSON
+      fetch('sukhirin-subdistricts.geojson')
+        .then(response => {
+          if (!response.ok) throw new Error("โหลดไฟล์ GeoJSON ไม่สำเร็จ");
+          return response.json();
+        })
+        .then(data => {
+          boundaryLayer.addData(data);
+          // ปรับมุมมองแผนที่ให้ครอบคลุมขอบเขตอำเภอพอดีโดยอัตโนมัติ
+          if (boundaryLayer.getBounds().isValid()) {
+            map.fitBounds(boundaryLayer.getBounds(), { padding: [20, 20] });
+          }
+        })
+        .catch(err => console.error("GeoJSON Error:", err));
 
-      // สลับชั้นแผนที่
+      // 3. เพิ่มแถบเมนูสลับเลเยอร์มุมขวาบน
       const baseMaps = {
         "Google แผนที่ถนน": googleStreets,
         "Google ภาพดาวเทียม": googleHybrid
       };
       const overlays = {
-        "ขอบเขต อ.สุคิริน": districtPolygon
+        "ขอบเขตพื้นที่ อ.สุคิริน": boundaryLayer
       };
-
       L.control.layers(baseMaps, overlays, { position: "topright" }).addTo(map);
+
+      // ปุ่มควบคุม
       L.control.zoom({ position: "bottomright" }).addTo(map);
       markersLayer.addTo(map);
     }
