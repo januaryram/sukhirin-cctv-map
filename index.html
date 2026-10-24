@@ -140,12 +140,41 @@
 
     // เริ่มต้นแผนที่
     function initMap() {
+      // พิกัดกึ่งกลาง อ.สุคิริน จ.นราธิวาส
       map = L.map("map", { zoomControl: false }).setView([5.9385, 101.7755], 14);
-      L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
-        attribution: '&copy; OpenStreetMap &copy; CARTO',
-        maxZoom: 19
-      }).addTo(map);
 
+      // 1. Google Maps แบบถนนปกติ (Streets/Roadmap)
+      const googleStreets = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+        maxZoom: 20,
+        subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+        attribution: '&copy; Google Maps'
+      });
+
+      // 2. Google Maps แบบภาพถ่ายดาวเทียมพร้อมชื่อถนน/สถานที่ (Hybrid Satellite)
+      const googleHybrid = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+        maxZoom: 20,
+        subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+        attribution: '&copy; Google Maps'
+      });
+
+      // 3. OpenStreetMap (แผนที่สำรองฟรี)
+      const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap'
+      });
+
+      // ตั้งค่าให้แสดง Google Maps แบบถนนปกติเป็นค่าเริ่มต้น
+      googleStreets.addTo(map);
+
+      // เพิ่มปุ่มเลือกสลับชั้นแผนที่ (มุมขวาบน) สลับดูภาพดาวเทียมหรือถนนได้สะดวก
+      const baseMaps = {
+        "Google แผนที่ถนน": googleStreets,
+        "Google ภาพดาวเทียม": googleHybrid,
+        "OpenStreetMap": osm
+      };
+      L.control.layers(baseMaps, null, { position: "topright" }).addTo(map);
+
+      // ปุ่มซูมเข้า-ออก (มุมขวาล่าง)
       L.control.zoom({ position: "bottomright" }).addTo(map);
       markersLayer.addTo(map);
     }
