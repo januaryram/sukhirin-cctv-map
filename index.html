@@ -94,6 +94,7 @@
         <span class="hidden sm:inline">รายงาน LINE</span>
       </button>
 
+      <!-- สถิติย่อบน Header -->
       <div class="hidden xl:flex items-center gap-2 text-xs font-medium border-l border-slate-800 pl-2.5">
         <div class="bg-slate-800 border border-slate-700 px-2.5 py-1 rounded-lg flex items-center gap-1.5">
           <span class="text-slate-400">ติดตั้งแล้ว:</span>
@@ -254,7 +255,7 @@
         </div>
       </div>
 
-      <!-- ส่วนที่ 2: จำแนกประเภทกล้องรวม (Master Types: 4G 57, Wifi 30, ยุทธวิธี 50) -->
+      <!-- ส่วนที่ 2: จำแนกประเภทกล้องรวม -->
       <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 md:p-5">
         <h2 class="text-xs md:text-sm font-semibold text-white flex items-center justify-between mb-3">
           <span class="flex items-center gap-2"><i data-lucide="layers" class="w-4 h-4 text-blue-400"></i> จำแนกตามประเภทกล้องทั้งหมด (137 ตัว)</span>
@@ -377,7 +378,6 @@
     let markersLayer = L.layerGroup();
     let isMobileSidebarOpen = false;
 
-    // ข้อมูลสถิติรวมของโครงการตามจริง
     const MASTER_INVENTORY = {
       totalProject: 189,
       installed: 137,
@@ -491,9 +491,8 @@ ${troubledText}
       const lineUrl = "https://line.me/R/msg/text/?" + encodeURIComponent(text);
       window.open(lineUrl, '_blank');
     }
-    
-    // ฟังก์ชันคัดลอก UID ลง Clipboard พร้อมเปิดแอป CamHipro
-function openCamHipro(uid) {
+
+    function openCamHipro(uid) {
       if (uid && uid !== '-') {
         navigator.clipboard.writeText(uid).catch(() => {});
       }
@@ -673,6 +672,7 @@ function openCamHipro(uid) {
         if (isOnline) badgeStyle = "bg-emerald-500/20 text-emerald-300 border-emerald-500/30";
         else if (isOnOff) badgeStyle = "bg-amber-500/20 text-amber-300 border-amber-500/30";
 
+        // วาดหมุดบนแผนที่ (เพิ่มปุ่มเปิด Google Maps นำทาง)
         if (cam.lat && cam.lng && !isNaN(cam.lat) && !isNaN(cam.lng)) {
           const marker = L.marker([cam.lat, cam.lng], { icon: createCustomMarker(cam.status) });
           marker.bindPopup(`
@@ -682,10 +682,14 @@ function openCamHipro(uid) {
               <div><b>ประเภท:</b> ${cam.type}</div>
               <div><b>UID:</b> <span class="font-mono text-blue-300 text-[11px]">${cam.uid}</span></div>
               <div><b>ป้อม:</b> ${cam.station}</div>
-              <div class="pt-1.5 border-t border-slate-700/60 flex items-center justify-between gap-2">
-                <button onclick="openCamHipro('${cam.uid}')" class="w-full flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-500 text-white font-medium py-1.5 px-3 rounded-lg shadow text-xs transition active:scale-95">
+              <div class="pt-2 border-t border-slate-700/60 grid grid-cols-2 gap-1.5">
+                <button onclick="openCamHipro('${cam.uid}')" class="flex items-center justify-center gap-1 bg-blue-600 hover:bg-blue-500 text-white font-medium py-1.5 px-2 rounded-lg shadow text-xs transition active:scale-95">
                   <i data-lucide="video" class="w-3.5 h-3.5"></i>
-                  <span>เปิดใน CamHipro</span>
+                  <span>CamHipro</span>
+                </button>
+                <button onclick="openGoogleMaps(${cam.lat}, ${cam.lng})" class="flex items-center justify-center gap-1 bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-1.5 px-2 rounded-lg shadow text-xs transition active:scale-95">
+                  <i data-lucide="navigation" class="w-3.5 h-3.5"></i>
+                  <span>นำทาง</span>
                 </button>
               </div>
             </div>
@@ -705,9 +709,14 @@ function openCamHipro(uid) {
           <div class="text-[11px] text-slate-400 font-mono mt-0.5">${cam.uid}</div>
           <div class="flex items-center justify-between text-[10px] text-slate-400 mt-2 pt-1.5 border-t border-slate-700/40">
             <span>กล้อง ${cam.type} • ${cam.station}</span>
-            <button onclick="event.stopPropagation(); openCamHipro('${cam.uid}')" class="px-2 py-0.5 bg-blue-600/30 hover:bg-blue-600 text-blue-300 hover:text-white rounded border border-blue-500/40 text-[10px] font-medium transition flex items-center gap-1">
-              <i data-lucide="external-link" class="w-3 h-3"></i> CamHipro
-            </button>
+            <div class="flex items-center gap-1">
+              <button onclick="event.stopPropagation(); openGoogleMaps(${cam.lat}, ${cam.lng})" title="นำทางด้วย Google Maps" class="p-1 bg-emerald-600/30 hover:bg-emerald-600 text-emerald-300 hover:text-white rounded border border-emerald-500/40 text-[10px] font-medium transition">
+                <i data-lucide="navigation" class="w-3 h-3"></i>
+              </button>
+              <button onclick="event.stopPropagation(); openCamHipro('${cam.uid}')" class="px-2 py-0.5 bg-blue-600/30 hover:bg-blue-600 text-blue-300 hover:text-white rounded border border-blue-500/40 text-[10px] font-medium transition flex items-center gap-1">
+                <i data-lucide="external-link" class="w-3 h-3"></i> CamHipro
+              </button>
+            </div>
           </div>
         `;
 
@@ -829,6 +838,9 @@ function openCamHipro(uid) {
               <div class="flex items-center gap-1.5">
                 <button onclick="goToCamOnMap(${c.id})" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded border border-slate-700 text-[11px] shrink-0">
                   ดูบนแผนที่
+                </button>
+                <button onclick="openGoogleMaps(${c.lat}, ${c.lng})" class="px-2 py-1 bg-emerald-600/30 hover:bg-emerald-600 text-emerald-300 hover:text-white rounded border border-emerald-500/40 text-[11px] shrink-0">
+                  นำทาง
                 </button>
                 <button onclick="openCamHipro('${c.uid}')" class="px-2 py-1 bg-blue-600/30 hover:bg-blue-600 text-blue-300 hover:text-white rounded border border-blue-500/40 text-[11px] shrink-0">
                   CamHipro
