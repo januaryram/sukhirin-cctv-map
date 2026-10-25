@@ -376,12 +376,7 @@
     let selectedStatusFilter = "ALL";
     let currentView = "map";
     let map;
-    let markersLayer = L.markerClusterGroup({
-  spiderfyOnMaxZoom: true,
-  showCoverageOnHover: false,
-  zoomToBoundsOnClick: true,
-  maxClusterRadius: 25 // ระยะดูดรวมหมุด (พิกเซล)
-    });
+    let markersLayer = L.layerGroup();
     let isMobileSidebarOpen = false;
 
     const MASTER_INVENTORY = {
