@@ -75,8 +75,8 @@
       </div>
     </div>
 
-    <!-- ปุ่มสลับมุมมอง & สรุปสถานะ -->
-    <div class="flex items-center gap-1.5 md:gap-2.5">
+    <!-- ปุ่มสลับมุมมอง, ปุ่มส่ง LINE & Refresh -->
+    <div class="flex items-center gap-1.5 md:gap-2">
       <div class="bg-slate-800/90 p-0.5 md:p-1 rounded-lg border border-slate-700/60 flex items-center gap-1 text-xs">
         <button id="nav-map" onclick="switchView('map')" class="flex items-center gap-1 px-2.5 py-1.5 md:px-3 md:py-1.5 rounded-md bg-blue-600 text-white font-medium shadow text-[11px] md:text-xs">
           <i data-lucide="map" class="w-3.5 h-3.5"></i>
@@ -88,11 +88,16 @@
         </button>
       </div>
 
-      <!-- สถิติย่อบน Header (แสดงเฉพาะจอใหญ่) -->
-      <div class="hidden lg:flex items-center gap-2 text-xs font-medium border-l border-slate-800 pl-2.5">
+      <!-- ปุ่มส่งรายงาน LINE -->
+      <button onclick="openLineSummaryModal()" title="ส่งรายงานเข้า LINE" class="flex items-center gap-1 px-2.5 py-1.5 md:px-3 md:py-1.5 bg-[#06C755] hover:bg-[#05b34c] text-white rounded-lg font-medium text-[11px] md:text-xs shadow transition active:scale-95">
+        <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
+        <span class="hidden sm:inline">รายงาน LINE</span>
+      </button>
+
+      <div class="hidden xl:flex items-center gap-2 text-xs font-medium border-l border-slate-800 pl-2.5">
         <div class="bg-slate-800 border border-slate-700 px-2.5 py-1 rounded-lg flex items-center gap-1.5">
-          <span class="text-slate-400">ทั้งหมด:</span>
-          <span id="stat-total" class="font-bold text-white">0</span>
+          <span class="text-slate-400">ติดตั้งแล้ว:</span>
+          <span id="stat-total" class="font-bold text-white">137</span>
         </div>
         <div class="bg-emerald-950/60 border border-emerald-700/50 text-emerald-300 px-2.5 py-1 rounded-lg flex items-center gap-1.5">
           <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
@@ -188,41 +193,100 @@
 
   <!-- หน้าที่ 2: Dashboard View -->
   <div id="view-dashboard" class="hidden flex-1 overflow-y-auto p-3 md:p-6 bg-slate-950">
-    <div class="max-w-7xl mx-auto space-y-4 md:space-y-6">
+    <div class="max-w-7xl mx-auto space-y-5 md:space-y-6">
       
-      <!-- KPI Cards (4 ช่อง) -->
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 md:gap-4">
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 md:p-4">
-          <p class="text-[11px] md:text-xs font-medium text-slate-400">ทั้งหมด</p>
-          <h3 id="dash-total" class="text-xl md:text-2xl font-bold text-white mt-0.5">0</h3>
-          <span class="text-[10px] text-slate-500 hidden sm:inline">กล้องในระบบ</span>
-        </div>
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 md:p-4">
-          <p class="text-[11px] md:text-xs font-medium text-slate-400">Online</p>
-          <h3 id="dash-online" class="text-xl md:text-2xl font-bold text-emerald-400 mt-0.5">0</h3>
-          <span class="text-[10px] text-emerald-500/80 font-medium hidden sm:inline">ใช้งานปกติ</span>
-        </div>
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 md:p-4">
-          <p class="text-[11px] md:text-xs font-medium text-slate-400">Offline</p>
-          <h3 id="dash-offline" class="text-xl md:text-2xl font-bold text-rose-400 mt-0.5">0</h3>
-          <span class="text-[10px] text-rose-500/80 font-medium hidden sm:inline">สัญญาณขาด</span>
-        </div>
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 md:p-4">
-          <p class="text-[11px] md:text-xs font-medium text-slate-400">On/Off (ติดๆ ดับๆ)</p>
-          <h3 id="dash-onoff" class="text-xl md:text-2xl font-bold text-amber-400 mt-0.5">0</h3>
-          <span class="text-[10px] text-amber-500/80 font-medium hidden sm:inline">สัญญาณไม่เสถียร</span>
+      <!-- ส่วนที่ 1: ภาพรวมคลังและจุดติดตั้ง (Master Asset Overview) -->
+      <div>
+        <h2 class="text-xs md:text-sm font-semibold text-slate-300 flex items-center gap-2 mb-3">
+          <i data-lucide="package-check" class="w-4 h-4 text-blue-400"></i>
+          ภาพรวมการบริหารจัดการกล้องวงจรปิด สภ.สุคิริน
+        </h2>
+        <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 md:gap-4">
+          <!-- กล้องทั้งหมด -->
+          <div class="bg-gradient-to-br from-slate-900 to-slate-900/60 border border-slate-800 rounded-xl p-3.5 md:p-4 shadow-sm">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] md:text-xs font-medium text-slate-400">กล้องทั้งหมดในโครงการ</span>
+              <span class="p-1.5 bg-blue-500/10 text-blue-400 rounded-lg"><i data-lucide="video" class="w-4 h-4"></i></span>
+            </div>
+            <h3 class="text-2xl md:text-3xl font-extrabold text-white mt-1">189 <span class="text-xs font-normal text-slate-400">ตัว</span></h3>
+            <p class="text-[10px] text-slate-500 mt-1">ยอดรวมของ สภ.สุคิริน ผบช.9</p>
+          </div>
+
+          <!-- ติดตั้งแล้ว -->
+          <div class="bg-gradient-to-br from-slate-900 to-slate-900/60 border border-emerald-900/30 rounded-xl p-3.5 md:p-4 shadow-sm">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] md:text-xs font-medium text-emerald-400">ติดตั้งแล้ว</span>
+              <span class="p-1.5 bg-emerald-500/10 text-emerald-400 rounded-lg"><i data-lucide="map-pin" class="w-4 h-4"></i></span>
+            </div>
+            <h3 class="text-2xl md:text-3xl font-extrabold text-emerald-400 mt-1">137 <span class="text-xs font-normal text-slate-400">ตัว</span></h3>
+            <div class="flex items-center gap-2 text-[10px] text-slate-300 mt-1">
+              <span class="bg-emerald-950/60 border border-emerald-800/40 px-1.5 py-0.5 rounded">ในเขต 60</span>
+              <span class="bg-blue-950/60 border border-blue-800/40 px-1.5 py-0.5 rounded">นอกเขต 77</span>
+            </div>
+          </div>
+
+          <!-- ชำรุด -->
+          <div class="bg-gradient-to-br from-slate-900 to-slate-900/60 border border-rose-900/30 rounded-xl p-3.5 md:p-4 shadow-sm">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] md:text-xs font-medium text-rose-400">ชำรุด / เสีย</span>
+              <span class="p-1.5 bg-rose-500/10 text-rose-400 rounded-lg"><i data-lucide="wrench" class="w-4 h-4"></i></span>
+            </div>
+            <h3 class="text-2xl md:text-3xl font-extrabold text-rose-400 mt-1">47 <span class="text-xs font-normal text-slate-400">ตัว</span></h3>
+            <p class="text-[10px] text-rose-400/80 mt-1">รอดำเนินการซ่อมบำรุง</p>
+          </div>
+
+          <!-- คงเหลือในคลัง -->
+          <div class="bg-gradient-to-br from-slate-900 to-slate-900/60 border border-amber-900/30 rounded-xl p-3.5 md:p-4 shadow-sm">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] md:text-xs font-medium text-amber-400">คงเหลือในคลัง</span>
+              <span class="p-1.5 bg-amber-500/10 text-amber-400 rounded-lg"><i data-lucide="archive" class="w-4 h-4"></i></span>
+            </div>
+            <h3 class="text-2xl md:text-3xl font-extrabold text-amber-400 mt-1">5 <span class="text-xs font-normal text-slate-400">ตัว</span></h3>
+            <p class="text-[10px] text-amber-400/80 mt-1">กล้องสำรองพร้อมใช้งาน</p>
+          </div>
         </div>
       </div>
 
-      <!-- สรุปแยกตามประเภท -->
+      <!-- ส่วนที่ 2: จำแนกประเภทกล้องรวม (Master Types: 4G 57, Wifi 30, ยุทธวิธี 50) -->
       <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 md:p-5">
-        <h2 class="text-xs md:text-sm font-semibold text-white flex items-center gap-2 mb-3">
-          <i data-lucide="layers" class="w-4 h-4 text-blue-400"></i> จำแนกตามประเภทกล้อง
+        <h2 class="text-xs md:text-sm font-semibold text-white flex items-center justify-between mb-3">
+          <span class="flex items-center gap-2"><i data-lucide="layers" class="w-4 h-4 text-blue-400"></i> จำแนกตามประเภทกล้องทั้งหมด (137 ตัว)</span>
+          <span class="text-[11px] font-mono text-slate-400">4G: 57 | Wifi: 30 | ยุทธวิธี: 50</span>
         </h2>
         <div id="dash-type-stats" class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4"></div>
       </div>
 
-      <!-- สรุปตามป้อม & กล้องที่มีปัญหา -->
+      <!-- ส่วนที่ 3: สถานะ Live การเชื่อมต่อ (Online / Offline / On/Off) -->
+      <div>
+        <h2 class="text-xs md:text-sm font-semibold text-slate-300 flex items-center gap-2 mb-3">
+          <i data-lucide="activity" class="w-4 h-4 text-emerald-400"></i>
+          สถานะการเชื่อมต่อสัญญาณภาพแบบเรียลไทม์
+        </h2>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 md:gap-4">
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 md:p-4">
+            <p class="text-[11px] md:text-xs font-medium text-slate-400">กล้องที่ตรวจวัด</p>
+            <h3 id="dash-total" class="text-xl md:text-2xl font-bold text-white mt-0.5">0</h3>
+            <span class="text-[10px] text-slate-500">ในฐานข้อมูลตารางรวม</span>
+          </div>
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 md:p-4">
+            <p class="text-[11px] md:text-xs font-medium text-emerald-400">Online ปกติ</p>
+            <h3 id="dash-online" class="text-xl md:text-2xl font-bold text-emerald-400 mt-0.5">0</h3>
+            <span class="text-[10px] text-emerald-500/80 font-medium">สัญญาณภาพเสถียร</span>
+          </div>
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 md:p-4">
+            <p class="text-[11px] md:text-xs font-medium text-rose-400">Offline ขาดการเชื่อมต่อ</p>
+            <h3 id="dash-offline" class="text-xl md:text-2xl font-bold text-rose-400 mt-0.5">0</h3>
+            <span class="text-[10px] text-rose-500/80 font-medium">ไม่พบสัญญาณภาพ</span>
+          </div>
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 md:p-4">
+            <p class="text-[11px] md:text-xs font-medium text-amber-400">On/Off ติดๆ ดับๆ</p>
+            <h3 id="dash-onoff" class="text-xl md:text-2xl font-bold text-amber-400 mt-0.5">0</h3>
+            <span class="text-[10px] text-amber-500/80 font-medium">สัญญาณไม่เสถียร</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ส่วนที่ 4: สรุปตามป้อม & กล้องที่มีปัญหา -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 md:p-5">
           <h2 class="text-xs md:text-sm font-semibold text-white flex items-center gap-2 mb-3">
@@ -255,6 +319,45 @@
 
     </div>
   </div>
+    
+      <!-- Modal หน้าต่างสรุปรายงานส่ง LINE -->
+      <div id="line-modal" class="hidden fixed inset-0 z-[3000] flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+          <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/80">
+            <div class="flex items-center gap-2">
+              <div class="p-1.5 bg-[#06C755]/20 text-[#06C755] rounded-lg border border-[#06C755]/30">
+            <i data-lucide="share-2" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-sm text-white">รายงานสรุปสถานะกล้องวงจรปิด</h3>
+            <p class="text-[11px] text-slate-400">พร้อมสำหรับคัดลอกหรือแชร์เข้ากลุ่ม LINE</p>
+          </div>
+        </div>
+        <button onclick="closeLineSummaryModal()" class="p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="p-4 flex-1 overflow-y-auto space-y-3">
+        <label class="text-xs font-medium text-slate-300">ตัวอย่างข้อความรายงาน:</label>
+        <textarea id="line-summary-text" readonly class="w-full h-64 bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-slate-200 font-mono leading-relaxed focus:outline-none select-all resize-none"></textarea>
+      </div>
+
+      <div class="p-4 border-t border-slate-800 bg-slate-900/60 flex items-center justify-end gap-2">
+        <button onclick="closeLineSummaryModal()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-medium transition">
+          ปิด
+        </button>
+        <button onclick="copyLineSummary()" id="btn-copy-line" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-medium shadow flex items-center gap-1.5 transition active:scale-95">
+          <i data-lucide="copy" class="w-4 h-4"></i>
+          <span id="btn-copy-line-text">คัดลอกข้อความ</span>
+        </button>
+        <button onclick="shareDirectToLine()" class="px-3.5 py-2 bg-[#06C755] hover:bg-[#05b34c] text-white rounded-lg text-xs font-medium shadow flex items-center gap-1.5 transition active:scale-95">
+          <i data-lucide="send" class="w-4 h-4"></i>
+          <span>แชร์เข้า LINE</span>
+        </button>
+      </div>
+    </div>
+  </div>
   
   <script>
     // URL CSV ที่เชื่อมตรงกับชีต "ตารางรวม" (gid=649862841)
@@ -267,36 +370,135 @@
     let markersLayer = L.layerGroup();
     let isMobileSidebarOpen = false;
 
+    // ข้อมูลสถิติรวมของโครงการตามจริง
+    const MASTER_INVENTORY = {
+      totalProject: 189,
+      installed: 137,
+      insideZone: 60,
+      outsideZone: 77,
+      broken: 47,
+      inStock: 5,
+      type4G: 57,
+      typeWifi: 30,
+      typeTactical: 50
+    };
+
+    // ฟังก์ชันสร้างข้อความรายงานสรุปประจำวัน (นำยอดภาพรวมโครงการ 189 ตัวกลับมาตามที่ต้องการ)
+    function generateLineSummaryText() {
+      const now = new Date();
+      const thaiDate = now.toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' });
+      const thaiTime = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+
+      const total = rawData.length;
+      const online = rawData.filter(c => (c.status || "").toLowerCase().trim() === "online").length;
+      const onoff = rawData.filter(c => {
+        const s = (c.status || "").toLowerCase().trim();
+        return s === "on/off" || s === "on-off";
+      }).length;
+      const offline = total - online - onoff;
+      const uptime = total > 0 ? ((online / total) * 100).toFixed(1) : 0;
+
+      const stationMap = {};
+      rawData.forEach(c => {
+        const st = c.station || "ไม่ระบุ";
+        if (!stationMap[st]) stationMap[st] = { total: 0, online: 0, offline: 0, onoff: 0 };
+        stationMap[st].total += 1;
+        const s = (c.status || "").toLowerCase().trim();
+        if (s === "online") stationMap[st].online += 1;
+        else if (s === "on/off" || s === "on-off") stationMap[st].onoff += 1;
+        else stationMap[st].offline += 1;
+      });
+
+      let stationText = "";
+      Object.entries(stationMap).forEach(([name, d]) => {
+        stationText += `• ${name}: รวม ${d.total} (Online ${d.online} | Off ${d.offline} | On/Off ${d.onoff})\n`;
+      });
+
+      const troubledCams = rawData.filter(c => (c.status || "").toLowerCase().trim() !== "online");
+      let troubledText = "";
+      if (troubledCams.length === 0) {
+        troubledText = "กล้องทุกจุดออนไลน์สมบูรณ์ 100%\n";
+      } else {
+        troubledCams.forEach((c, idx) => {
+          troubledText += `${idx + 1}. [${c.status}] ${c.name} (${c.station})\n   UID: ${c.uid}\n`;
+        });
+      }
+
+      return `📊 รายงานสถานะกล้องวงจรปิด สภ.สุคิริน
+🗓 วันที่: ${thaiDate} เวลา ${thaiTime} น.
+━━━━━━━━━━━━━━━━━━
+📦 ยอดภาพรวมโครงการ (189 ตัว):
+• ติดตั้งแล้ว: 137 ตัว (ในเขต 60 / นอกเขต 77)
+• ชำรุด: 47 ตัว | คงเหลือในคลัง: 5 ตัว
+• ประเภท: 4G (57) | WIFI (30) | ยุทธวิธี (50)
+
+📡 สถานะกล้องที่ติดตั้งแล้ว (Live):
+• ทั้งหมดในระบบ: ${total} ตัว
+🟢 Online ปกติ: ${online} ตัว (${uptime}%)
+🔴 Offline ขัดข้อง: ${offline} ตัว
+🟡 On/Off ไม่เสถียร: ${onoff} ตัว
+
+📍 สถิติแยกตามป้อมรับผิดชอบ:
+${stationText}
+⚠️ รายการกล้องขัดข้อง (${troubledCams.length} ตัว):
+${troubledText}
+━━━━━━━━━━━━━━━━━━
+🌐 ตรวจสอบพิกัดสด: https://januaryram.github.io/sukhirin-cctv-map/`;
+    }
+
+    function openLineSummaryModal() {
+      const summary = generateLineSummaryText();
+      document.getElementById("line-summary-text").value = summary;
+      document.getElementById("line-modal").classList.remove("hidden");
+    }
+
+    function closeLineSummaryModal() {
+      document.getElementById("line-modal").classList.add("hidden");
+    }
+
+    function copyLineSummary() {
+      const text = document.getElementById("line-summary-text").value;
+      navigator.clipboard.writeText(text).then(() => {
+        const btnText = document.getElementById("btn-copy-line-text");
+        btnText.innerText = "คัดลอกสำเร็จ!";
+        setTimeout(() => {
+          btnText.innerText = "คัดลอกข้อความ";
+        }, 2000);
+      }).catch(() => {
+        alert("กรุณาคัดลอกข้อความจากกล่องข้อความโดยตรง");
+      });
+    }
+
+    function shareDirectToLine() {
+      const text = document.getElementById("line-summary-text").value;
+      const lineUrl = "https://line.me/R/msg/text/?" + encodeURIComponent(text);
+      window.open(lineUrl, '_blank');
+    }
+    
     // ฟังก์ชันคัดลอก UID ลง Clipboard พร้อมเปิดแอป CamHipro
 function openCamHipro(uid) {
-  // 1. คัดลอก UID ไปยัง Clipboard ทันที
-  if (uid && uid !== '-') {
-    navigator.clipboard.writeText(uid).then(() => {
-      // แจ้งเตือนสั้นๆ ให้ผู้ใช้ทราบ
-      alert(`คัดลอก UID: ${uid} เรียบร้อยแล้ว!`);
-    }).catch(() => {});
-  }
-
-  // 2. สั่งเปิดตัวแอปพลิเคชัน
-  const isAndroid = /android/i.test(navigator.userAgent);
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-
-  if (isAndroid) {
-    window.location.href = "intent://#Intent;scheme=camhipro;package=com.hichip.campro;end";
-  } else if (isIOS) {
-    const now = Date.now();
-    window.location.href = "camhipro://";
-    setTimeout(() => {
-      if (Date.now() - now < 1500) {
-        window.location.href = "https://apps.apple.com/th/app/camhipro/id1420508581";
+      if (uid && uid !== '-') {
+        navigator.clipboard.writeText(uid).catch(() => {});
       }
-    }, 1000);
-  } else {
-    window.open("https://play.google.com/store/apps/details?id=com.hichip.campro", "_blank");
-  }
-}
 
-    // เปิด/ปิด Sidebar บนจอมือถือ
+      const isAndroid = /android/i.test(navigator.userAgent);
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+      if (isAndroid) {
+        window.location.href = "intent://#Intent;scheme=camhipro;package=com.hichip.campro;end";
+      } else if (isIOS) {
+        const now = Date.now();
+        window.location.href = "camhipro://";
+        setTimeout(() => {
+          if (Date.now() - now < 1500) {
+            window.location.href = "https://apps.apple.com/th/app/camhipro/id1420508581";
+          }
+        }, 1000);
+      } else {
+        window.open("https://play.google.com/store/apps/details?id=com.hichip.campro", "_blank");
+      }
+    }
+
     function openMobileSidebar() {
       const sidebar = document.getElementById("sidebar-container");
       const backdrop = document.getElementById("sidebar-backdrop");
@@ -313,7 +515,6 @@ function openCamHipro(uid) {
       isMobileSidebarOpen = false;
     }
 
-    // สลับหน้า Map / Dashboard
     function switchView(view) {
       currentView = view;
       const mapContainer = document.getElementById("view-map");
@@ -454,8 +655,7 @@ function openCamHipro(uid) {
         let badgeStyle = "bg-rose-500/20 text-rose-300 border-rose-500/30";
         if (isOnline) badgeStyle = "bg-emerald-500/20 text-emerald-300 border-emerald-500/30";
         else if (isOnOff) badgeStyle = "bg-amber-500/20 text-amber-300 border-amber-500/30";
-        
-        // วาดหมุดบนแผนที่
+
         if (cam.lat && cam.lng && !isNaN(cam.lat) && !isNaN(cam.lng)) {
           const marker = L.marker([cam.lat, cam.lng], { icon: createCustomMarker(cam.status) });
           marker.bindPopup(`
@@ -524,9 +724,14 @@ function openCamHipro(uid) {
       document.getElementById("dash-onoff").innerText = onoff;
 
       const typeContainer = document.getElementById("dash-type-stats");
-      const types = ["4G", "Wifi", "ยุทธวิธี"];
-      typeContainer.innerHTML = types.map(t => {
-        const typeCams = rawData.filter(c => c.type === t);
+      const typesConfig = [
+        { name: "4G", target: MASTER_INVENTORY.type4G },
+        { name: "Wifi", target: MASTER_INVENTORY.typeWifi },
+        { name: "ยุทธวิธี", target: MASTER_INVENTORY.typeTactical }
+      ];
+
+      typeContainer.innerHTML = typesConfig.map(tc => {
+        const typeCams = rawData.filter(c => c.type === tc.name);
         const tTotal = typeCams.length;
         const tOnline = typeCams.filter(c => (c.status || "").toLowerCase().trim() === "online").length;
         const tOnOff = typeCams.filter(c => {
@@ -538,12 +743,15 @@ function openCamHipro(uid) {
         const pOnline = tTotal > 0 ? Math.round((tOnline / tTotal) * 100) : 0;
         const pOnOff = tTotal > 0 ? Math.round((tOnOff / tTotal) * 100) : 0;
         const pOffline = tTotal > 0 ? Math.max(0, 100 - pOnline - pOnOff) : 0;
-
+        
         return `
           <div class="bg-slate-800/60 border border-slate-700/50 rounded-lg p-3 space-y-2">
             <div class="flex items-center justify-between">
-              <span class="font-semibold text-xs text-white">กล้อง ${t}</span>
-              <span class="text-xs text-slate-400 font-mono">${tOnline}/${tTotal} ตัว</span>
+              <div>
+                <span class="font-bold text-xs text-white">กล้อง ${tc.name}</span>
+                <span class="text-[10px] text-blue-400 ml-1.5 font-mono">โครงการ: ${tc.target} ตัว</span>
+              </div>
+              <span class="text-xs text-slate-300 font-mono">ในระบบ: ${tTotal} ตัว</span>
             </div>
             <div class="w-full bg-slate-700 h-2 rounded-full overflow-hidden flex">
               <div class="bg-emerald-500 h-full" style="width: ${pOnline}%"></div>
@@ -551,9 +759,9 @@ function openCamHipro(uid) {
               <div class="bg-rose-500 h-full" style="width: ${pOffline}%"></div>
             </div>
             <div class="flex justify-between text-[11px] text-slate-400">
-              <span class="text-emerald-400">On: ${tOnline}</span>
-              <span class="text-amber-400">On/Off: ${tOnOff}</span>
-              <span class="text-rose-400">Off: ${tOffline}</span>
+              <span class="text-emerald-400 font-medium">On: ${tOnline}</span>
+              <span class="text-amber-400 font-medium">On/Off: ${tOnOff}</span>
+              <span class="text-rose-400 font-medium">Off: ${tOffline}</span>
               <span class="text-slate-300 font-semibold">${pOnline}%</span>
             </div>
           </div>
