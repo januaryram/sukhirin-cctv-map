@@ -390,6 +390,16 @@
       typeTactical: 50
     };
 
+    // ฟังก์ชันเปิด Google Maps นำทาง
+    function openGoogleMaps(lat, lng) {
+      if (lat && lng && !isNaN(lat) && !isNaN(lng)) {
+        const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+        window.open(url, '_blank');
+      } else {
+        alert("ไม่พบข้อมูลพิกัดละติจูด/ลองจิจูดของกล้องจุดนี้");
+      }
+    }
+
     // ฟังก์ชันสร้างข้อความรายงานสรุปประจำวัน (นำยอดภาพรวมโครงการ 189 ตัวกลับมาตามที่ต้องการ)
     function generateLineSummaryText() {
       const now = new Date();
