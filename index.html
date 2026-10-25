@@ -19,6 +19,16 @@
   <script src="https://unpkg.com/lucide@latest"></script>
 
   <style>
+    /* ล็อคไม่ให้หน้าเว็บเลื่อนหลุดขอบบนมือถือ */
+    html, body {
+      height: 100%;
+      height: 100dvh;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      position: fixed;
+      width: 100%;
+    }
     @keyframes pulse-green {
       0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
       70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
@@ -334,10 +344,10 @@
     
       <!-- Modal หน้าต่างสรุปรายงานส่ง LINE -->
       <div id="line-modal" class="hidden fixed inset-0 z-[3000] flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
-          <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/80">
-            <div class="flex items-center gap-2">
-              <div class="p-1.5 bg-[#06C755]/20 text-[#06C755] rounded-lg border border-[#06C755]/30">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+      <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/80">
+        <div class="flex items-center gap-2">
+          <div class="p-1.5 bg-[#06C755]/20 text-[#06C755] rounded-lg border border-[#06C755]/30">
             <i data-lucide="share-2" class="w-5 h-5"></i>
           </div>
           <div>
