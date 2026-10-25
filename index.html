@@ -682,15 +682,14 @@ ${troubledText}
               <div><b>ประเภท:</b> ${cam.type}</div>
               <div><b>UID:</b> <span class="font-mono text-blue-300 text-[11px]">${cam.uid}</span></div>
               <div><b>ป้อม:</b> ${cam.station}</div>
-              <div class="pt-2 border-t border-slate-700/60 grid grid-cols-2 gap-1.5">
-                <button onclick="openCamHipro('${cam.uid}')" class="flex items-center justify-center gap-1 bg-blue-600 hover:bg-blue-500 text-white font-medium py-1.5 px-2 rounded-lg shadow text-xs transition active:scale-95">
-                  <i data-lucide="video" class="w-3.5 h-3.5"></i>
-                  <span>CamHipro</span>
+              <div class="pt-2 border-t border-slate-700/60 grid grid-cols-2 gap-2 text-center">
+                <button onclick="openCamHipro('${cam.uid}')" class="w-full flex items-center justify-center text-center bg-blue-600 hover:bg-blue-500 text-white font-medium py-1.5 px-2 rounded-lg shadow text-xs transition active:scale-95">
+                  CamHipro
                 </button>
-                <button onclick="openGoogleMaps(${cam.lat}, ${cam.lng})" class="flex items-center justify-center gap-1 bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-1.5 px-2 rounded-lg shadow text-xs transition active:scale-95">
-                  <i data-lucide="navigation" class="w-3.5 h-3.5"></i>
-                  <span>นำทาง</span>
+                <button onclick="openGoogleMaps(${cam.lat}, ${cam.lng})" class="w-full flex items-center justify-center text-center bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-1.5 px-2 rounded-lg shadow text-xs transition active:scale-95">
+                  นำทาง
                 </button>
+                </div>
               </div>
             </div>
           `);
