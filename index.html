@@ -6,9 +6,10 @@
   <title>ระบบติดตามกล้องวงจรปิด สภ.สุคิริน</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Leaflet CSS & JS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Leaflet MarkerCluster CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
   <!-- PapaParse สำหรับแปลง CSV จาก Google Sheets -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
   <!-- Lucide Icons -->
@@ -375,7 +376,12 @@
     let selectedStatusFilter = "ALL";
     let currentView = "map";
     let map;
-    let markersLayer = L.layerGroup();
+    let markersLayer = L.markerClusterGroup({
+  spiderfyOnMaxZoom: true,
+  showCoverageOnHover: false,
+  zoomToBoundsOnClick: true,
+  maxClusterRadius: 25 // ระยะดูดรวมหมุด (พิกเซล)
+    });
     let isMobileSidebarOpen = false;
 
     const MASTER_INVENTORY = {
